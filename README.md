@@ -108,8 +108,8 @@ EarthGuard/
 
 ### 1. Clone Repository
 ```bash
-git clone https://github.com/arushi-vaidya/earthguard.git
-cd earthguard
+git clone https://github.com/arushi-vaidya/Seismo.git
+cd Seismo
 ```
 
 ### 2. Backend Setup
