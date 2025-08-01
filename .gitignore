@@ -1,0 +1,237 @@
+# EarthGuard Project .gitignore
+
+# ======================
+# Backend (Python/Flask)
+# ======================
+
+# Python
+__pycache__/
+*.py[cod]
+*$py.class
+*.so
+.Python
+build/
+develop-eggs/
+dist/
+downloads/
+eggs/
+.eggs/
+lib/
+lib64/
+parts/
+sdist/
+var/
+wheels/
+pip-wheel-metadata/
+share/python-wheels/
+*.egg-info/
+.installed.cfg
+*.egg
+MANIFEST
+
+# Virtual environments
+venv/
+env/
+ENV/
+env.bak/
+venv.bak/
+.venv/
+
+# Flask
+instance/
+.webassets-cache
+
+# Database
+*.db
+*.sqlite
+*.sqlite3
+earthguard.db
+rescue_coordination.db
+
+# Environment variables
+.env
+.env.local
+.env.development.local
+.env.test.local
+.env.production.local
+
+# Logs
+*.log
+logs/
+
+# ======================
+# Frontend (Flutter)
+# ======================
+
+# Miscellaneous
+*.class
+*.log
+*.pyc
+*.swp
+.DS_Store
+.atom/
+.buildlog/
+.history
+.svn/
+.swiftpm/
+migrate_working_dir/
+
+# IntelliJ related
+*.iml
+*.ipr
+*.iws
+.idea/
+
+# The .vscode folder contains launch configuration and tasks you configure in
+# VS Code which you may wish to be included in version control, so this line
+# is commented out by default.
+.vscode/
+
+# Flutter/Dart/Pub related
+**/doc/api/
+**/ios/Flutter/.last_build_id
+.dart_tool/
+.flutter-plugins
+.flutter-plugins-dependencies
+.packages
+.pub-cache/
+.pub/
+/build/
+frontend/build/
+
+# Symbolication related
+app.*.symbols
+
+# Obfuscation related
+app.*.map.json
+
+# Android Studio will place build artifacts here
+/android/app/debug
+/android/app/profile
+/android/app/release
+frontend/android/app/debug/
+frontend/android/app/profile/
+frontend/android/app/release/
+
+# Android
+*.apk
+*.aab
+android/key.properties
+android/app/google-services.json
+frontend/android/key.properties
+frontend/android/app/google-services.json
+
+# iOS
+**/ios/Flutter/flutter_assets/
+**/ios/Flutter/flutter_export_environment.sh
+**/ios/ServiceDefinitions.json
+**/ios/Runner/GeneratedPluginRegistrant.*
+ios/Flutter/flutter_export_environment.sh
+frontend/ios/Flutter/flutter_export_environment.sh
+
+# macOS
+**/macos/Flutter/ephemeral/
+**/macos/Flutter/flutter_assets/
+**/macos/Flutter/flutter_export_environment.sh
+**/macos/Runner/GeneratedPluginRegistrant.swift
+
+# Windows
+**/windows/flutter/ephemeral/
+frontend/windows/flutter/ephemeral/
+
+# Web
+/web/
+
+# Coverage
+coverage/
+
+# ======================
+# General Development
+# ======================
+
+# Operating System
+.DS_Store
+.DS_Store?
+._*
+.Spotlight-V100
+.Trashes
+ehthumbs.db
+Thumbs.db
+
+# Editors
+.vscode/
+.idea/
+*.swp
+*.swo
+*~
+
+# Temporary files
+*.tmp
+*.temp
+temp/
+tmp/
+
+# Backup files
+*.bak
+*.backup
+
+# ======================
+# Project Specific
+# ======================
+
+# API Keys and Secrets
+config/secrets.yaml
+config/api_keys.json
+*.key
+*.pem
+*.p12
+
+# Data files
+data/earthquake_history.json
+data/elevation_data.json
+data/evacuation_routes.json
+*.csv
+*.json.backup
+
+# Generated files
+generated/
+auto-generated/
+
+# Test files
+test_data/
+mock_data/
+
+# Documentation build
+docs/_build/
+docs/build/
+
+# Deployment
+deployment/
+docker-compose.override.yml
+
+# ======================
+# Machine Learning Models
+# ======================
+
+# Model files
+*.h5
+*.pkl
+*.joblib
+models/trained/
+models/checkpoints/
+
+# Training data
+training_data/
+datasets/
+
+# ======================
+# Network and Communication
+# ======================
+
+# Certificates
+*.crt
+*.cert
+
+# Network configs
+network_config.json
+mesh_network_keys.json
