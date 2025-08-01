@@ -108,7 +108,7 @@ EarthGuard/
 
 ### 1. Clone Repository
 ```bash
-git clone https://github.com/yourusername/earthguard.git
+git clone https://github.com/arushi-vaidya/earthguard.git
 cd earthguard
 ```
 
