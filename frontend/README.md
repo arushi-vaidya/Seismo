@@ -1,16 +1,27 @@
-# earthguard
+## 🏗️ Architecture Overview
 
-A new Flutter project.
-
-## Getting Started
-
-This project is a starting point for a Flutter application.
-
-A few resources to get you started if this is your first Flutter project:
-
-- [Lab: Write your first Flutter app](https://docs.flutter.dev/get-started/codelab)
-- [Cookbook: Useful Flutter samples](https://docs.flutter.dev/cookbook)
-
-For help getting started with Flutter development, view the
-[online documentation](https://docs.flutter.dev/), which offers tutorials,
-samples, guidance on mobile development, and a full API reference.
+```
+lib/
+├── main.dart                    # App entry point
+├── screens/                     # UI Screens
+│   ├── home_screen.dart        # Main dashboard
+│   ├── emergency_screen.dart   # Emergency mode interface
+│   ├── evacuation_screen.dart  # Evacuation guidance
+│   └── rescue_dashboard.dart   # Rescue coordination
+├── services/                    # Core Business Logic
+│   ├── earthquake_detector.dart    # Seismic detection engine
+│   ├── mesh_network.dart          # Mesh networking
+│   ├── rescue_coordinator.dart    # AI rescue coordination
+│   ├── tsunami_predictor.dart     # Tsunami risk assessment
+│   ├── drone_controller.dart      # Drone integration
+│   └── voice_assistant.dart       # Voice AI assistant
+├── widgets/                     # Reusable UI Components
+│   ├── emergency_button.dart      # Emergency activation button
+│   ├── seismic_monitor.dart       # Real-time seismic display
+│   └── mesh_status.dart           # Network status indicator
+└── models/                      # Data Models
+    ├── earthquake_data.dart       # Earthquake event data
+    ├── tsunami_alert.dart         # Tsunami warning data
+    ├── victim_report.dart         # Rescue victim data
+    └── resource.dart              # Emergency resource data
+```
