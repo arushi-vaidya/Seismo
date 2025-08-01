@@ -10,7 +10,7 @@ dependencies:
   flutter:
     sdk: flutter
   
-  # Sensors and Location
+  # Core sensors and location
   sensors_plus: ^3.0.1
   geolocator: ^9.0.2
   
@@ -19,17 +19,6 @@ dependencies:
   
   # Networking
   http: ^1.1.0
-  
-  # Maps (choose one)
-  # mapbox_gl: ^0.16.0  # For Mapbox
-  # flutter_map: ^6.0.1 # For OpenStreetMap
-  
-  # Bluetooth/Mesh
-  flutter_blue_plus: ^1.12.13
-  
-  # Audio/Voice
-  speech_to_text: ^6.3.0
-  flutter_tts: ^3.7.0
   
   # Utilities
   path_provider: ^2.1.1
@@ -45,8 +34,3 @@ dev_dependencies:
 
 flutter:
   uses-material-design: true
-  
-  assets:
-    - assets/images/
-    - assets/maps/
-    - assets/sounds/

@@ -13,9 +13,9 @@ class EarthquakeDetector {
   bool _isMonitoring = false;
   
   // Detection parameters
-  static const double P_WAVE_THRESHOLD = 0.1;
+  static const double P_WAVE_THRESHOLD = 0.5;
   static const double S_WAVE_THRESHOLD = 2.0;
-  static const int SAMPLE_WINDOW = 100; // 1 second at 100Hz
+  static const int SAMPLE_WINDOW = 50; // Reduced for demo
 
   Stream<EarthquakeEvent> get earthquakeStream => _earthquakeController.stream;
   final StreamController<EarthquakeEvent> _earthquakeController = 
@@ -25,6 +25,8 @@ class EarthquakeDetector {
     if (_isMonitoring) return;
     
     _isMonitoring = true;
+    print('🌍 Starting earthquake monitoring...');
+    
     _accelerometerSubscription = accelerometerEvents.listen(_processReading);
   }
 
@@ -44,9 +46,13 @@ class EarthquakeDetector {
     // Calculate magnitude of acceleration
     double totalMagnitude = 0;
     for (var reading in _readings) {
-      totalMagnitude += sqrt(pow(reading.x, 2) + pow(reading.y, 2) + pow(reading.z, 2));
+      double magnitude = sqrt(pow(reading.x, 2) + pow(reading.y, 2) + pow(reading.z, 2));
+      totalMagnitude += magnitude;
     }
     double avgMagnitude = totalMagnitude / _readings.length;
+    
+    // Remove gravity (approximately 9.8)
+    avgMagnitude = (avgMagnitude - 9.8).abs();
     
     // Detect P-wave (small initial shake)
     if (avgMagnitude > P_WAVE_THRESHOLD && avgMagnitude < S_WAVE_THRESHOLD) {
@@ -60,6 +66,7 @@ class EarthquakeDetector {
   }
 
   void _triggerPWaveDetection(double magnitude) {
+    print('📊 P-Wave detected: $magnitude');
     _earthquakeController.add(EarthquakeEvent(
       type: EarthquakeEventType.pWave,
       magnitude: _estimateMagnitude(magnitude),
@@ -68,6 +75,7 @@ class EarthquakeDetector {
   }
 
   void _triggerEarthquake(double magnitude) {
+    print('🚨 Earthquake detected: $magnitude');
     _earthquakeController.add(EarthquakeEvent(
       type: EarthquakeEventType.earthquake,
       magnitude: _estimateMagnitude(magnitude),
@@ -76,12 +84,18 @@ class EarthquakeDetector {
   }
 
   double _estimateMagnitude(double accelerometerMagnitude) {
-    // Mock magnitude calculation
-    return (accelerometerMagnitude * 2).clamp(1.0, 9.0);
+    // Simple magnitude estimation based on acceleration
+    return (accelerometerMagnitude * 1.5 + 2.0).clamp(1.0, 9.0);
+  }
+
+  void stopMonitoring() {
+    _isMonitoring = false;
+    _accelerometerSubscription?.cancel();
+    print('🌍 Earthquake monitoring stopped');
   }
 
   void dispose() {
-    _accelerometerSubscription?.cancel();
+    stopMonitoring();
     _earthquakeController.close();
   }
 }

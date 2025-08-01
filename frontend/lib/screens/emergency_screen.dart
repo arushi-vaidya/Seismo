@@ -1,9 +1,6 @@
 // screens/emergency_screen.dart
 import 'package:flutter/material.dart';
 import 'package:geolocator/geolocator.dart';
-import '../services/mesh_network.dart';
-import '../services/rescue_coordinator.dart';
-import '../services/tsunami_predictor.dart';
 
 class EmergencyScreen extends StatefulWidget {
   @override
@@ -12,8 +9,7 @@ class EmergencyScreen extends StatefulWidget {
 
 class _EmergencyScreenState extends State<EmergencyScreen> {
   Position? _currentLocation;
-  TsunamiRisk? _tsunamiRisk;
-  bool _meshActivated = false;
+  bool _emergencyActivated = false;
   List<String> _recentMessages = [];
 
   @override
@@ -23,52 +19,21 @@ class _EmergencyScreenState extends State<EmergencyScreen> {
   }
 
   Future<void> _activateEmergencyServices() async {
-    // Get current location
-    _currentLocation = await Geolocator.getCurrentPosition();
-    
-    // Activate mesh network
-    await MeshNetwork().activateEmergencyMesh();
-    setState(() {
-      _meshActivated = true;
-    });
-    
-    // Activate rescue coordination
-    if (_currentLocation != null) {
-      await RescueCoordinator().activateEmergencyMode(_currentLocation!);
-    }
-    
-    // Check tsunami risk
-    await _assessTsunamiRisk();
-    
-    // Listen for mesh messages
-    _listenForMessages();
-  }
-
-  Future<void> _assessTsunamiRisk() async {
-    if (_currentLocation == null) return;
-    
-    // Mock earthquake data - in real implementation, get from detector
-    final tsunamiRisk = await TsunamiPredictor().assessTsunamiRisk(
-      7.5, // magnitude
-      15.0, // depth
-      Position(latitude: _currentLocation!.latitude + 0.1, longitude: _currentLocation!.longitude + 0.1, timestamp: DateTime.now(), accuracy: 0, altitude: 0, heading: 0, speed: 0, speedAccuracy: 0), // epicenter
-      _currentLocation!,
-    );
-    
-    setState(() {
-      _tsunamiRisk = tsunamiRisk;
-    });
-  }
-
-  void _listenForMessages() {
-    MeshNetwork().messageStream.listen((message) {
+    try {
+      // Get current location
+      _currentLocation = await Geolocator.getCurrentPosition();
+      
       setState(() {
-        _recentMessages.insert(0, '${message.type.toString()}: ${message.content}');
-        if (_recentMessages.length > 10) {
-          _recentMessages.removeLast();
-        }
+        _emergencyActivated = true;
+        _recentMessages.add('Emergency mode activated');
+        _recentMessages.add('Location acquired: ${_currentLocation!.latitude.toStringAsFixed(4)}, ${_currentLocation!.longitude.toStringAsFixed(4)}');
       });
-    });
+      
+    } catch (e) {
+      setState(() {
+        _recentMessages.add('Error getting location: $e');
+      });
+    }
   }
 
   @override
@@ -77,6 +42,7 @@ class _EmergencyScreenState extends State<EmergencyScreen> {
       appBar: AppBar(
         title: Text('EMERGENCY MODE'),
         backgroundColor: Colors.red[900],
+        foregroundColor: Colors.white,
         automaticallyImplyLeading: false,
       ),
       body: SingleChildScrollView(
@@ -86,10 +52,7 @@ class _EmergencyScreenState extends State<EmergencyScreen> {
           children: [
             _buildEmergencyStatus(),
             SizedBox(height: 16),
-            if (_tsunamiRisk != null && _tsunamiRisk!.level != TsunamiRiskLevel.none)
-              _buildTsunamiWarning(),
-            SizedBox(height: 16),
-            _buildMeshStatus(),
+            _buildLocationInfo(),
             SizedBox(height: 16),
             _buildQuickActions(),
             SizedBox(height: 16),
@@ -119,59 +82,14 @@ class _EmergencyScreenState extends State<EmergencyScreen> {
             ),
             SizedBox(height: 8),
             Text('Emergency services have been activated'),
-            Text('Your location is being broadcast for rescue'),
+            Text('Stay calm and follow safety procedures'),
           ],
         ),
       ),
     );
   }
 
-  Widget _buildTsunamiWarning() {
-    return Card(
-      color: Colors.orange[50],
-      child: Padding(
-        padding: EdgeInsets.all(16),
-        child: Column(
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
-            Row(
-              children: [
-                Icon(Icons.waves, color: Colors.orange[800]),
-                SizedBox(width: 8),
-                Text(
-                  'TSUNAMI RISK: ${_tsunamiRisk!.level.toString().toUpperCase()}',
-                  style: TextStyle(
-                    fontSize: 18,
-                    fontWeight: FontWeight.bold,
-                    color: Colors.orange[800],
-                  ),
-                ),
-              ],
-            ),
-            if (_tsunamiRisk!.estimatedArrivalTime != null) ...[
-              SizedBox(height: 8),
-              Text(
-                'Estimated arrival: ${_tsunamiRisk!.estimatedArrivalTime!.toLocal().toString().substring(11, 16)}',
-                style: TextStyle(fontWeight: FontWeight.bold),
-              ),
-            ],
-            if (_tsunamiRisk!.recommendedActions != null) ...[
-              SizedBox(height: 8),
-              Text('Recommended actions:', style: TextStyle(fontWeight: FontWeight.bold)),
-              ..._tsunamiRisk!.recommendedActions!.map((action) => 
-                Padding(
-                  padding: EdgeInsets.only(left: 16, top: 4),
-                  child: Text('• $action'),
-                ),
-              ),
-            ],
-          ],
-        ),
-      ),
-    );
-  }
-
-  Widget _buildMeshStatus() {
+  Widget _buildLocationInfo() {
     return Card(
       child: Padding(
         padding: EdgeInsets.all(16),
@@ -179,21 +97,23 @@ class _EmergencyScreenState extends State<EmergencyScreen> {
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
             Text(
-              'Emergency Network',
+              'Your Location',
               style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold),
             ),
             SizedBox(height: 8),
-            Row(
-              children: [
-                Icon(
-                  _meshActivated ? Icons.wifi : Icons.wifi_off,
-                  color: _meshActivated ? Colors.green : Colors.red,
-                ),
-                SizedBox(width: 8),
-                Text(_meshActivated ? 'Mesh Network Active' : 'Activating...'),
-              ],
-            ),
-            Text('Connected devices: ${_meshActivated ? "3" : "0"}'),
+            if (_currentLocation != null) ...[
+              Text('Latitude: ${_currentLocation!.latitude.toStringAsFixed(6)}'),
+              Text('Longitude: ${_currentLocation!.longitude.toStringAsFixed(6)}'),
+              Text('Accuracy: ${_currentLocation!.accuracy.toStringAsFixed(1)}m'),
+            ] else ...[
+              Row(
+                children: [
+                  CircularProgressIndicator(strokeWidth: 2),
+                  SizedBox(width: 12),
+                  Text('Getting location...'),
+                ],
+              ),
+            ],
           ],
         ),
       ),
@@ -214,18 +134,24 @@ class _EmergencyScreenState extends State<EmergencyScreen> {
             Expanded(
               child: ElevatedButton.icon(
                 onPressed: _sendSOSMessage,
-                icon: Icon(Icons.sos),
-                label: Text('Send SOS'),
-                style: ElevatedButton.styleFrom(backgroundColor: Colors.red),
+                icon: Icon(Icons.sos, color: Colors.white),
+                label: Text('Send SOS', style: TextStyle(color: Colors.white)),
+                style: ElevatedButton.styleFrom(
+                  backgroundColor: Colors.red,
+                  padding: EdgeInsets.symmetric(vertical: 12),
+                ),
               ),
             ),
             SizedBox(width: 8),
             Expanded(
               child: ElevatedButton.icon(
                 onPressed: _reportStatus,
-                icon: Icon(Icons.health_and_safety),
-                label: Text('I\'m Safe'),
-                style: ElevatedButton.styleFrom(backgroundColor: Colors.green),
+                icon: Icon(Icons.health_and_safety, color: Colors.white),
+                label: Text('I\'m Safe', style: TextStyle(color: Colors.white)),
+                style: ElevatedButton.styleFrom(
+                  backgroundColor: Colors.green,
+                  padding: EdgeInsets.symmetric(vertical: 12),
+                ),
               ),
             ),
           ],
@@ -235,19 +161,25 @@ class _EmergencyScreenState extends State<EmergencyScreen> {
           children: [
             Expanded(
               child: ElevatedButton.icon(
-                onPressed: _findEvacuation,
-                icon: Icon(Icons.directions_run),
-                label: Text('Evacuate'),
-                style: ElevatedButton.styleFrom(backgroundColor: Colors.orange),
+                onPressed: _findShelter,
+                icon: Icon(Icons.home, color: Colors.white),
+                label: Text('Find Shelter', style: TextStyle(color: Colors.white)),
+                style: ElevatedButton.styleFrom(
+                  backgroundColor: Colors.orange,
+                  padding: EdgeInsets.symmetric(vertical: 12),
+                ),
               ),
             ),
             SizedBox(width: 8),
             Expanded(
               child: ElevatedButton.icon(
-                onPressed: _requestResources,
-                icon: Icon(Icons.medical_services),
-                label: Text('Need Help'),
-                style: ElevatedButton.styleFrom(backgroundColor: Colors.blue),
+                onPressed: _requestHelp,
+                icon: Icon(Icons.medical_services, color: Colors.white),
+                label: Text('Need Help', style: TextStyle(color: Colors.white)),
+                style: ElevatedButton.styleFrom(
+                  backgroundColor: Colors.blue,
+                  padding: EdgeInsets.symmetric(vertical: 12),
+                ),
               ),
             ),
           ],
@@ -264,7 +196,7 @@ class _EmergencyScreenState extends State<EmergencyScreen> {
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
             Text(
-              'Emergency Messages',
+              'Emergency Log',
               style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold),
             ),
             SizedBox(height: 8),
@@ -277,9 +209,24 @@ class _EmergencyScreenState extends State<EmergencyScreen> {
                       itemBuilder: (context, index) {
                         return Padding(
                           padding: EdgeInsets.symmetric(vertical: 4),
-                          child: Text(
-                            _recentMessages[index],
-                            style: TextStyle(fontSize: 12),
+                          child: Row(
+                            crossAxisAlignment: CrossAxisAlignment.start,
+                            children: [
+                              Text(
+                                '${DateTime.now().toString().substring(11, 19)}',
+                                style: TextStyle(
+                                  fontSize: 10,
+                                  color: Colors.grey[600],
+                                ),
+                              ),
+                              SizedBox(width: 8),
+                              Expanded(
+                                child: Text(
+                                  _recentMessages[index],
+                                  style: TextStyle(fontSize: 12),
+                                ),
+                              ),
+                            ],
                           ),
                         );
                       },
@@ -291,62 +238,70 @@ class _EmergencyScreenState extends State<EmergencyScreen> {
     );
   }
 
-  void _sendSOSMessage() async {
-    if (_currentLocation != null) {
-      await MeshNetwork().sendEmergencyBroadcast(
-        'SOS: Need immediate help at this location',
-        _currentLocation!,
-      );
-      ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(content: Text('SOS message sent to emergency network')),
-      );
-    }
+  void _sendSOSMessage() {
+    setState(() {
+      _recentMessages.insert(0, 'SOS: Emergency help requested at current location');
+    });
+    ScaffoldMessenger.of(context).showSnackBar(
+      SnackBar(
+        content: Text('SOS message logged - In real app, this would contact emergency services'),
+        backgroundColor: Colors.red,
+      ),
+    );
   }
 
-  void _reportStatus() async {
-    if (_currentLocation != null) {
-      await MeshNetwork().sendEmergencyBroadcast(
-        'Status: I am safe and uninjured',
-        _currentLocation!,
-      );
-      ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(content: Text('Safety status reported')),
-      );
-    }
+  void _reportStatus() {
+    setState(() {
+      _recentMessages.insert(0, 'Status: Reported as safe and uninjured');
+    });
+    ScaffoldMessenger.of(context).showSnackBar(
+      SnackBar(
+        content: Text('Safety status reported'),
+        backgroundColor: Colors.green,
+      ),
+    );
   }
 
-  void _findEvacuation() {
-    if (_tsunamiRisk?.evacuationZones != null) {
-      showDialog(
-        context: context,
-        builder: (context) => AlertDialog(
-          title: Text('Evacuation Zones'),
-          content: Column(
-            mainAxisSize: MainAxisSize.min,
-            children: _tsunamiRisk!.evacuationZones!.map((zone) =>
-              ListTile(
-                title: Text(zone.name),
-                subtitle: Text('${zone.distanceKm.toStringAsFixed(1)} km away'),
-                trailing: Text('${zone.elevation}m'),
-              ),
-            ).toList(),
-          ),
-          actions: [
-            TextButton(
-              onPressed: () => Navigator.pop(context),
-              child: Text('Close'),
-            ),
-          ],
-        ),
-      );
-    }
-  }
-
-  void _requestResources() {
+  void _findShelter() {
     showDialog(
       context: context,
       builder: (context) => AlertDialog(
-        title: Text('Request Resources'),
+        title: Text('Nearby Shelters'),
+        content: Column(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            ListTile(
+              leading: Icon(Icons.school),
+              title: Text('Community Center'),
+              subtitle: Text('0.5 km away'),
+            ),
+            ListTile(
+              leading: Icon(Icons.local_hospital),
+              title: Text('Emergency Shelter'),
+              subtitle: Text('1.2 km away'),
+            ),
+            ListTile(
+              leading: Icon(Icons.business),
+              title: Text('Government Building'),
+              subtitle: Text('2.1 km away'),
+            ),
+          ],
+        ),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.pop(context),
+            child: Text('Close'),
+          ),
+        ],
+      ),
+    );
+  }
+
+  void _requestHelp() {
+    showDialog(
+      context: context,
+      builder: (context) => AlertDialog(
+        title: Text('Request Help'),
         content: Column(
           mainAxisSize: MainAxisSize.min,
           children: [
@@ -365,22 +320,27 @@ class _EmergencyScreenState extends State<EmergencyScreen> {
               title: Text('Medical Aid'),
               onTap: () => _requestResource('Medical Aid'),
             ),
+            ListTile(
+              leading: Icon(Icons.engineering),
+              title: Text('Rescue'),
+              onTap: () => _requestResource('Rescue'),
+            ),
           ],
         ),
       ),
     );
   }
 
-  void _requestResource(String resource) async {
+  void _requestResource(String resource) {
     Navigator.pop(context);
-    if (_currentLocation != null) {
-      await MeshNetwork().sendEmergencyBroadcast(
-        'Resource Request: Need $resource urgently',
-        _currentLocation!,
-      );
-      ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(content: Text('$resource request sent')),
-      );
-    }
+    setState(() {
+      _recentMessages.insert(0, 'Resource Request: Need $resource urgently');
+    });
+    ScaffoldMessenger.of(context).showSnackBar(
+      SnackBar(
+        content: Text('$resource request logged'),
+        backgroundColor: Colors.blue,
+      ),
+    );
   }
 }

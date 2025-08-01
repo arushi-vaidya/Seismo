@@ -8,7 +8,7 @@ plugins {
 android {
     namespace = "com.earthguard.earthguard"
     compileSdk = flutter.compileSdkVersion
-    ndkVersion = flutter.ndkVersion
+    ndkVersion = "27.0.12077973"  // Updated to fix NDK version mismatch
 
     compileOptions {
         sourceCompatibility = JavaVersion.VERSION_11
