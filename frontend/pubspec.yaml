@@ -1,0 +1,52 @@
+name: earthguard
+description: Complete Earthquake Response System
+
+version: 1.0.0+1
+
+environment:
+  sdk: ">=2.17.0 <4.0.0"
+
+dependencies:
+  flutter:
+    sdk: flutter
+  
+  # Sensors and Location
+  sensors_plus: ^3.0.1
+  geolocator: ^9.0.2
+  
+  # Database
+  sqflite: ^2.3.0
+  
+  # Networking
+  http: ^1.1.0
+  
+  # Maps (choose one)
+  # mapbox_gl: ^0.16.0  # For Mapbox
+  # flutter_map: ^6.0.1 # For OpenStreetMap
+  
+  # Bluetooth/Mesh
+  flutter_blue_plus: ^1.12.13
+  
+  # Audio/Voice
+  speech_to_text: ^6.3.0
+  flutter_tts: ^3.7.0
+  
+  # Utilities
+  path_provider: ^2.1.1
+  shared_preferences: ^2.2.2
+  permission_handler: ^11.0.1
+  
+  cupertino_icons: ^1.0.2
+
+dev_dependencies:
+  flutter_test:
+    sdk: flutter
+  flutter_lints: ^2.0.0
+
+flutter:
+  uses-material-design: true
+  
+  assets:
+    - assets/images/
+    - assets/maps/
+    - assets/sounds/
