@@ -40,3 +40,23 @@ Received message at 2025-05-25 00:31:17.026312595 +0530 IST from NDRF: Yes we ca
 
 Received message at 2025-05-25 00:31:48.63276192 +0530 IST from Abhi: yes please come fast. bring some food too
 Received message at 2025-05-25 00:31:48.632777436 +0530 IST from Abhi: yes please come fast. bring some food too
+Received message at 2025-08-03 21:27:45.027223 +0530 IST from NDRF: hello i am stuck
+
+Received message at 2025-08-03 21:27:54.162672 +0530 IST from NDRF: 
+
+Received message at 2025-08-03 21:32:36.773275 +0530 IST from NDRF: hello this is NDRF support team
+
+Received message at 2025-08-03 21:32:52.519223 +0530 IST from Civilian1: i need food
+
+Received message at 2025-08-03 21:33:17.710175 +0530 IST from NDRF: i am stuck under debris
+
+Received message at 2025-08-03 21:33:33.188884 +0530 IST from Civilian1: i am stuck under debris
+
+Received message at 2025-08-03 21:33:58.033965 +0530 IST from NDRF: take care
+Received message at 2025-08-03 21:52:00.246405 +0530 IST from NDRF-Team: hello
+Received message at 2025-08-03 21:52:12.111734 +0530 IST from NDRF-Team: yes how can we help
+Received message at 2025-08-03 21:52:26.679916 +0530 IST from NDRF-Team: ouch
+Received message at 2025-08-03 21:53:10.119796 +0530 IST from NDRF-Team: hello
+
+Received message at 2025-08-03 22:01:02.760496 +0530 IST from Civilian (civilian): I need food at 22 street
+Received message at 2025-08-03 22:01:12.730521 +0530 IST from NDRF Team (team): on the way

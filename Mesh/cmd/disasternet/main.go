@@ -13,28 +13,33 @@ import (
 	"sync"
 	"time"
 
-	// "github.com/libp2p/go-libp2p/core/peer"
-	// ma "github.com/multiformats/go-multiaddr"
-
 	pubsub "github.com/libp2p/go-libp2p-pubsub"
 )
 
 type IncomingMsg struct {
-	Message string `json:"message"`
+	Message  string `json:"message"`
+	UserType string `json:"userType"` // "team" or "civilian"
 }
 
-var MessageArr []string
+type DisplayMessage struct {
+	Content   string    `json:"content"`
+	Sender    string    `json:"sender"`
+	UserType  string    `json:"userType"`
+	Timestamp time.Time `json:"timestamp"`
+}
+
+var MessageArr []DisplayMessage
 var messageMu sync.Mutex
 
 var cr *p2p.ChatRoom
 
 func enableCORS(w http.ResponseWriter) {
-	w.Header().Set("Access-Control-Allow-Origin", "*")                   // Allow all origins to access
-	w.Header().Set("Access-Control-Allow-Methods", "GET, POST, OPTIONS") // Allowed HTTP methods
-	w.Header().Set("Access-Control-Allow-Headers", "Content-Type")       // Allowed headers
+	w.Header().Set("Access-Control-Allow-Origin", "*")
+	w.Header().Set("Access-Control-Allow-Methods", "GET, POST, OPTIONS")
+	w.Header().Set("Access-Control-Allow-Headers", "Content-Type")
 }
 
-func StoreMessage(msg string) {
+func StoreMessage(msg DisplayMessage) {
 	messageMu.Lock()
 	defer messageMu.Unlock()
 	MessageArr = append(MessageArr, msg)
@@ -49,15 +54,19 @@ func GetMessages(w http.ResponseWriter, r *http.Request) {
 	if r.Method != "GET" {
 		http.Error(w, "Only Get Method supported", http.StatusBadRequest)
 		return
-
 	}
+
+	messageMu.Lock()
+	messages := make([]DisplayMessage, len(MessageArr))
+	copy(messages, MessageArr)
+	messageMu.Unlock()
+
 	w.Header().Set("Content-Type", "application/json")
-	err := json.NewEncoder(w).Encode(MessageArr)
+	err := json.NewEncoder(w).Encode(messages)
 	if err != nil {
 		http.Error(w, "failed to encode messages", http.StatusInternalServerError)
 		return
 	}
-
 }
 
 func PostMessage(w http.ResponseWriter, r *http.Request) {
@@ -68,7 +77,6 @@ func PostMessage(w http.ResponseWriter, r *http.Request) {
 	if r.Method != "POST" {
 		http.Error(w, "Only POST Method supported", http.StatusBadRequest)
 		return
-
 	}
 
 	var msg_post IncomingMsg
@@ -78,27 +86,50 @@ func PostMessage(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	err_pub := cr.Publish(msg_post.Message)
-	StoreMessage(msg_post.Message)
+	// Create a structured message with user type information
+	messageWithType := map[string]interface{}{
+		"content":   msg_post.Message,
+		"userType":  msg_post.UserType,
+		"timestamp": time.Now().Unix(),
+	}
+
+	messageBytes, err := json.Marshal(messageWithType)
+	if err != nil {
+		http.Error(w, "failed to encode message", http.StatusInternalServerError)
+		return
+	}
+
+	err_pub := cr.Publish(string(messageBytes))
+
+	// Store the message locally for immediate display
+	displayMsg := DisplayMessage{
+		Content:   msg_post.Message,
+		Sender:    getSenderName(msg_post.UserType),
+		UserType:  msg_post.UserType,
+		Timestamp: time.Now(),
+	}
+	StoreMessage(displayMsg)
 
 	if err_pub != nil {
 		fmt.Println("Sending message failed trying again...")
 		http.Error(w, "failed to publish", http.StatusInternalServerError)
-
 		return
 	}
 	w.WriteHeader(http.StatusOK)
+}
 
+func getSenderName(userType string) string {
+	if userType == "team" {
+		return "NDRF Team"
+	}
+	return "Civilian"
 }
 
 func main() {
-
 	port := flag.String("port", "", "port")
 	nickFlag := flag.String("nick", "", "nickname to use in chat. will be generated if empty")
 	roomFlag := flag.String("room", "chat-room", "name of chat room to join")
 	httpServerRun := flag.Bool("enable-http", false, "run http server on this node")
-
-	// peerAddr := flag.String("peer-address", "", "peer address")
 	sameNetworkString := flag.String("same_string", "", "same_string")
 
 	flag.Parse()
@@ -117,11 +148,9 @@ func main() {
 	peerChan := p2p.InitMDNS(h, *sameNetworkString)
 
 	go func() {
-
 		for {
-			peer := <-peerChan // will block until we discover a peer
+			peer := <-peerChan
 			if peer.ID > h.ID() {
-				// if other end peer id greater than us, don't connect to it, just wait for it to connect us
 				fmt.Println("Found peer:", peer, " id is greater than us, wait for it to connect to us")
 				continue
 			}
@@ -134,31 +163,9 @@ func main() {
 
 			log.Println("Connection to the peer found through MDNS has been established")
 			log.Println("Peer Id:", peer.ID, "Peer Addrs: ", peer.Addrs)
-
 		}
 	}()
-	//logic for connecting to peer through peer-address if we know it beforehand and pass it through terminal
 
-	// If we received a peer address, we should connect to it.
-	// if *peerAddr != "" {
-	// 	// Parse the multiaddr string.
-	// 	peerMA, err := ma.NewMultiaddr(*peerAddr)
-	// 	if err != nil {
-	// 		panic(err)
-	// 	}
-	// 	peerAddrInfo, err := peer.AddrInfoFromP2pAddr(peerMA)
-	// 	if err != nil {
-	// 		panic(err)
-	// 	}
-
-	// 	// Connect to the node at the given address.
-	// 	if err := h.Connect(context.Background(), *peerAddrInfo); err != nil {
-	// 		panic(err)
-	// 	}
-	// 	log.Println("Connected to", peerAddrInfo.String())
-	// }
-
-	// use the nickname from the cli flag, or a default if blank
 	nick := *nickFlag
 	if len(nick) == 0 {
 		nick = "ABHI"
@@ -166,7 +173,6 @@ func main() {
 
 	room := *roomFlag
 
-	// join the chat room
 	cr, err = p2p.JoinChatRoom(ctx, ps, h.ID(), nick, room)
 	if err != nil {
 		panic(err)
@@ -174,15 +180,14 @@ func main() {
 
 	if *httpServerRun {
 		go func() {
-
 			http.HandleFunc("/send", PostMessage)
-
 			http.HandleFunc("/messages", GetMessages)
+			
+			log.Printf("Starting HTTP server on port 3001")
 			err := http.ListenAndServe(":3001", nil)
 			if err != nil {
 				log.Fatal(err)
 			}
-
 		}()
 	}
 
@@ -190,12 +195,41 @@ func main() {
 	if err != nil {
 		log.Fatal("error opening logs.txt")
 	}
-	// Read incoming messages
+
+	// Read incoming messages from P2P network
 	go func() {
 		for msg := range cr.Messages {
-			text := fmt.Sprintf("Received message at %s from %s: %s\n", time.Now().Local(), msg.SenderNick, msg.Message)
-			StoreMessage(text)
-			fmt.Printf("Received message at %s from %s: %s\n", time.Now().Local(), msg.SenderNick, msg.Message)
+			// Try to parse the message as JSON to extract user type
+			var parsedMsg map[string]interface{}
+			var displayMsg DisplayMessage
+			
+			if json.Unmarshal([]byte(msg.Message), &parsedMsg) == nil {
+				// It's a structured message with user type
+				content, _ := parsedMsg["content"].(string)
+				userType, _ := parsedMsg["userType"].(string)
+				
+				displayMsg = DisplayMessage{
+					Content:   content,
+					Sender:    getSenderName(userType),
+					UserType:  userType,
+					Timestamp: time.Now(),
+				}
+			} else {
+				// It's a plain text message (legacy or terminal input)
+				displayMsg = DisplayMessage{
+					Content:   msg.Message,
+					Sender:    msg.SenderNick,
+					UserType:  "unknown",
+					Timestamp: time.Now(),
+				}
+			}
+
+			StoreMessage(displayMsg)
+
+			text := fmt.Sprintf("Received message at %s from %s (%s): %s\n", 
+				time.Now().Local(), displayMsg.Sender, displayMsg.UserType, displayMsg.Content)
+			fmt.Print(text)
+			
 			_, err_log := f.WriteString(text)
 			if err_log != nil {
 				log.Fatal("error writing logs..")
@@ -210,12 +244,12 @@ func main() {
 	if err != nil {
 		fmt.Println("Error publishing:", err)
 	}
+	
 	for {
 		line, err := reader.ReadString('\n')
 		if err != nil {
 			log.Fatal(err)
 		}
-		// fmt.Printf("Sent message from %s: %s\n", nick, "Hello from "+h.ID().String())
 
 		err_pub := cr.Publish(line)
 
@@ -224,7 +258,5 @@ func main() {
 			cr.Publish(line)
 			continue
 		}
-
 	}
-
 }
