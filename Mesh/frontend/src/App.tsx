@@ -1,7 +1,5 @@
-// Add this to your existing App.tsx file
-
-import { AlertTriangle, Send, Shield, MapPin, Clock, Users, Phone, Zap, CheckCircle, Info, MessageSquare, Filter, User, Radio, Truck, Heart, Navigation, Share, Copy, Loader, XCircle } from 'lucide-react'
-import React, { useEffect, useState } from 'react'
+import { AlertTriangle, Send, Shield, MapPin, Clock, Users, Phone, Zap, CheckCircle, Info, MessageSquare, Filter, User, Radio, Truck, Heart, Navigation, Share, Copy, Loader, XCircle, Menu, X, Signal, Battery, Wifi, Globe, Mic, MicOff, Camera, Settings, Search, Bell, ChevronDown, ArrowUp, ArrowDown, Activity, Satellite } from 'lucide-react'
+import React, { useEffect, useState, useRef } from 'react'
 
 interface Message {
   content: string;
@@ -18,7 +16,7 @@ interface LocationData {
   address?: string;
 }
 
-// Add this LocationSharing component to your file
+// Enhanced Location Sharing Component
 const LocationSharing: React.FC<{
   onSendLocation: (message: string) => void;
   userType: 'team' | 'civilian';
@@ -79,45 +77,6 @@ const LocationSharing: React.FC<{
     );
   };
 
-  const startWatchingLocation = () => {
-    if (!navigator.geolocation) return;
-
-    const options = {
-      enableHighAccuracy: true,
-      timeout: 5000,
-      maximumAge: 30000
-    };
-
-    const id = navigator.geolocation.watchPosition(
-      (position) => {
-        const locationData: LocationData = {
-          latitude: position.coords.latitude,
-          longitude: position.coords.longitude,
-          accuracy: position.coords.accuracy,
-          timestamp: Date.now()
-        };
-        setLocation(locationData);
-        setLocationStatus('success');
-      },
-      (error) => {
-        setLocationStatus('error');
-        setErrorMessage('Error tracking location');
-      },
-      options
-    );
-
-    setWatchId(id);
-    setIsWatching(true);
-  };
-
-  const stopWatchingLocation = () => {
-    if (watchId !== null) {
-      navigator.geolocation.clearWatch(watchId);
-      setWatchId(null);
-      setIsWatching(false);
-    }
-  };
-
   const formatLocationMessage = (loc: LocationData, type: 'quick' | 'detailed' | 'emergency'): string => {
     const accuracy = loc.accuracy < 100 ? 'High' : loc.accuracy < 500 ? 'Medium' : 'Low';
     
@@ -129,8 +88,7 @@ const LocationSharing: React.FC<{
       return `🚨 EMERGENCY LOCATION 🚨\n📍 ${loc.latitude.toFixed(6)}, ${loc.longitude.toFixed(6)}\n🎯 Accuracy: ±${Math.round(loc.accuracy)}m (${accuracy})\n⏰ ${new Date(loc.timestamp).toLocaleString()}\n🗺️ Google Maps: https://maps.google.com/?q=${loc.latitude},${loc.longitude}\n⚠️ NEED IMMEDIATE ASSISTANCE HERE`;
     }
     
-    // detailed
-    return `📍 DETAILED LOCATION\nCoordinates: ${loc.latitude.toFixed(6)}, ${loc.longitude.toFixed(6)}\nAccuracy: ±${Math.round(loc.accuracy)}m (${accuracy})\nTime: ${new Date(loc.timestamp).toLocaleString()}\nGoogle Maps: https://maps.google.com/?q=${loc.latitude},${loc.longitude}\nOpenStreetMap: https://www.openstreetmap.org/?mlat=${loc.latitude}&mlon=${loc.longitude}&zoom=15`;
+    return `📍 DETAILED LOCATION\nCoordinates: ${loc.latitude.toFixed(6)}, ${loc.longitude.toFixed(6)}\nAccuracy: ±${Math.round(loc.accuracy)}m (${accuracy})\nTime: ${new Date(loc.timestamp).toLocaleString()}\nGoogle Maps: https://maps.google.com/?q=${loc.latitude},${loc.longitude}`;
   };
 
   const sendLocation = (type: 'quick' | 'detailed' | 'emergency') => {
@@ -139,182 +97,151 @@ const LocationSharing: React.FC<{
     onSendLocation(message);
   };
 
-  useEffect(() => {
-    return () => {
-      if (watchId !== null) {
-        navigator.geolocation.clearWatch(watchId);
-      }
-    };
-  }, [watchId]);
-
   if (isCompact) {
-    // Compact version for quick access
     return (
       <div className="flex items-center space-x-2">
         <button
           onClick={getCurrentLocation}
           disabled={locationStatus === 'loading'}
-          className={`flex items-center space-x-1 px-3 py-2 rounded-lg text-sm transition-all duration-200 hover:scale-105 disabled:opacity-50 ${
-            userType === 'team' 
-              ? 'bg-blue-600/20 hover:bg-blue-600/40 text-blue-300 border border-blue-500/30' 
-              : 'bg-red-600/20 hover:bg-red-600/40 text-red-300 border border-red-500/30'
-          }`}
+          className={`group relative flex items-center space-x-2 px-4 py-2 rounded-xl text-sm font-medium transition-all duration-300 ${
+            userType === 'team'
+              ? 'bg-gradient-to-r from-blue-500/20 to-cyan-500/20 hover:from-blue-500/30 hover:to-cyan-500/30 text-blue-200 border border-blue-400/30 hover:border-blue-400/50'
+              : 'bg-gradient-to-r from-red-500/20 to-orange-500/20 hover:from-red-500/30 hover:to-orange-500/30 text-red-200 border border-red-400/30 hover:border-red-400/50'
+          } hover:scale-105 hover:shadow-lg disabled:opacity-50 disabled:cursor-not-allowed`}
         >
           {locationStatus === 'loading' ? (
             <Loader className="w-4 h-4 animate-spin" />
           ) : (
-            <MapPin className="w-4 h-4" />
+            <MapPin className="w-4 h-4 group-hover:scale-110 transition-transform" />
           )}
-          <span>Get Location</span>
+          <span>GPS</span>
+          <div className="absolute inset-0 rounded-xl bg-gradient-to-r from-white/0 to-white/10 opacity-0 group-hover:opacity-100 transition-opacity" />
         </button>
         
         {location && (
           <button
             onClick={() => sendLocation('quick')}
-            className={`flex items-center space-x-1 px-3 py-2 rounded-lg text-sm transition-all duration-200 hover:scale-105 ${
-              userType === 'team' 
-                ? 'bg-green-600/20 hover:bg-green-600/40 text-green-300 border border-green-500/30' 
-                : 'bg-orange-600/20 hover:bg-orange-600/40 text-orange-300 border border-orange-500/30'
-            }`}
+            className={`group relative flex items-center space-x-2 px-4 py-2 rounded-xl text-sm font-medium transition-all duration-300 ${
+              userType === 'team'
+                ? 'bg-gradient-to-r from-green-500/20 to-emerald-500/20 hover:from-green-500/30 hover:to-emerald-500/30 text-green-200 border border-green-400/30 hover:border-green-400/50'
+                : 'bg-gradient-to-r from-orange-500/20 to-amber-500/20 hover:from-orange-500/30 hover:to-amber-500/30 text-orange-200 border border-orange-400/30 hover:border-orange-400/50'
+            } hover:scale-105 hover:shadow-lg`}
           >
-            <Share className="w-4 h-4" />
-            <span>Share Location</span>
+            <Share className="w-4 h-4 group-hover:scale-110 transition-transform" />
+            <span>Share</span>
+            <div className="absolute inset-0 rounded-xl bg-gradient-to-r from-white/0 to-white/10 opacity-0 group-hover:opacity-100 transition-opacity" />
           </button>
         )}
       </div>
     );
   }
 
-  // Full component for expanded view
   return (
-    <div className="space-y-3">
-      {/* Location Status */}
-      <div className={`p-3 rounded-lg border ${
-        locationStatus === 'success' ? 'border-green-500/50 bg-green-500/10' :
-        locationStatus === 'error' ? 'border-red-500/50 bg-red-500/10' :
-        locationStatus === 'loading' ? 'border-yellow-500/50 bg-yellow-500/10' :
-        'border-gray-500/50 bg-gray-500/10'
+    <div className="space-y-4">
+      <div className={`relative p-4 rounded-2xl border backdrop-blur-xl ${
+        locationStatus === 'success' ? 'border-green-400/50 bg-green-500/10' :
+        locationStatus === 'error' ? 'border-red-400/50 bg-red-500/10' :
+        locationStatus === 'loading' ? 'border-yellow-400/50 bg-yellow-500/10' :
+        'border-gray-400/30 bg-gray-500/10'
       }`}>
-        <div className="flex items-center justify-between">
-          <div className="flex items-center space-x-2">
-            {locationStatus === 'loading' && <Loader className="w-4 h-4 animate-spin text-yellow-400" />}
-            {locationStatus === 'success' && <CheckCircle className="w-4 h-4 text-green-400" />}
-            {locationStatus === 'error' && <XCircle className="w-4 h-4 text-red-400" />}
-            {locationStatus === 'idle' && <MapPin className="w-4 h-4 text-gray-400" />}
+        <div className="flex items-center justify-between mb-3">
+          <div className="flex items-center space-x-3">
+            {locationStatus === 'loading' && <Loader className="w-5 h-5 animate-spin text-yellow-400" />}
+            {locationStatus === 'success' && <CheckCircle className="w-5 h-5 text-green-400" />}
+            {locationStatus === 'error' && <XCircle className="w-5 h-5 text-red-400" />}
+            {locationStatus === 'idle' && <MapPin className="w-5 h-5 text-gray-400" />}
             
-            <span className="text-sm font-medium text-white">
-              {locationStatus === 'loading' && 'Getting GPS location...'}
-              {locationStatus === 'success' && 'Location ready'}
-              {locationStatus === 'error' && 'Location error'}
-              {locationStatus === 'idle' && 'GPS location sharing'}
+            <span className="text-base font-semibold text-white">
+              {locationStatus === 'loading' && 'Acquiring GPS Signal...'}
+              {locationStatus === 'success' && 'Location Acquired'}
+              {locationStatus === 'error' && 'Location Error'}
+              {locationStatus === 'idle' && 'GPS Location Services'}
             </span>
           </div>
-          
-          {isWatching && (
-            <div className="flex items-center space-x-1 bg-blue-500/20 px-2 py-1 rounded-full">
-              <div className="w-2 h-2 bg-blue-400 rounded-full animate-pulse"></div>
-              <span className="text-xs text-blue-300">Tracking</span>
-            </div>
-          )}
         </div>
 
         {location && (
-          <div className="mt-2 text-xs space-y-1">
-            <div className="text-white font-mono">
+          <div className="bg-black/20 rounded-xl p-3 font-mono text-sm">
+            <div className="text-white font-bold text-base mb-1">
               {location.latitude.toFixed(6)}, {location.longitude.toFixed(6)}
             </div>
-            <div className="text-gray-300">
+            <div className="text-gray-300 text-xs">
               Accuracy: ±{Math.round(location.accuracy)}m • {new Date(location.timestamp).toLocaleTimeString()}
             </div>
           </div>
         )}
 
         {errorMessage && (
-          <p className="mt-2 text-red-300 text-xs">{errorMessage}</p>
+          <div className="mt-3 p-3 bg-red-500/20 border border-red-400/30 rounded-xl">
+            <p className="text-red-300 text-sm font-medium">{errorMessage}</p>
+          </div>
         )}
       </div>
 
-      {/* Action Buttons */}
-      <div className="flex space-x-2">
+      <div className="grid grid-cols-2 gap-3">
         <button
           onClick={getCurrentLocation}
           disabled={locationStatus === 'loading'}
-          className="flex-1 flex items-center justify-center space-x-2 p-2 bg-blue-600/20 hover:bg-blue-600/40 border border-blue-500/30 rounded-lg transition-all duration-200 hover:scale-105 disabled:opacity-50"
+          className="group relative flex items-center justify-center space-x-2 p-4 bg-gradient-to-r from-blue-500/20 to-cyan-500/20 hover:from-blue-500/30 hover:to-cyan-500/30 border border-blue-400/30 hover:border-blue-400/50 rounded-xl transition-all duration-300 hover:scale-105 disabled:opacity-50 disabled:cursor-not-allowed"
         >
-          <Navigation className="w-4 h-4" />
-          <span className="text-sm">Get GPS</span>
+          <Navigation className="w-5 h-5 group-hover:rotate-45 transition-transform duration-300" />
+          <span className="font-medium">Get GPS</span>
         </button>
 
-        <button
-          onClick={isWatching ? stopWatchingLocation : startWatchingLocation}
-          className={`flex items-center justify-center space-x-2 p-2 border rounded-lg transition-all duration-200 hover:scale-105 ${
-            isWatching 
-              ? 'bg-red-600/20 hover:bg-red-600/40 border-red-500/30' 
-              : 'bg-green-600/20 hover:bg-green-600/40 border-green-500/30'
-          }`}
-        >
-          <MapPin className="w-4 h-4" />
-          <span className="text-sm">{isWatching ? 'Stop' : 'Track'}</span>
-        </button>
+        {location && (
+          <button
+            onClick={() => sendLocation('emergency')}
+            className="group relative flex items-center justify-center space-x-2 p-4 bg-gradient-to-r from-red-500/20 to-orange-500/20 hover:from-red-500/30 hover:to-orange-500/30 border border-red-400/30 hover:border-red-400/50 rounded-xl transition-all duration-300 hover:scale-105"
+          >
+            <AlertTriangle className="w-5 h-5 group-hover:scale-110 transition-transform" />
+            <span className="font-medium">EMERGENCY</span>
+          </button>
+        )}
       </div>
-
-      {/* Share Buttons */}
-      {location && (
-        <div className="space-y-2">
-          <button
-            onClick={() => sendLocation('quick')}
-            className="w-full flex items-center justify-center space-x-2 p-2 bg-green-600/20 hover:bg-green-600/40 border border-green-500/30 rounded-lg transition-all duration-200 hover:scale-105"
-          >
-            <Share className="w-4 h-4" />
-            <span className="text-sm">Share Coordinates</span>
-          </button>
-
-          <button
-            onClick={() => sendLocation('detailed')}
-            className="w-full flex items-center justify-center space-x-2 p-2 bg-blue-600/20 hover:bg-blue-600/40 border border-blue-500/30 rounded-lg transition-all duration-200 hover:scale-105"
-          >
-            <Navigation className="w-4 h-4" />
-            <span className="text-sm">Share Detailed Location</span>
-          </button>
-
-          {userType === 'civilian' && (
-            <button
-              onClick={() => sendLocation('emergency')}
-              className="w-full flex items-center justify-center space-x-2 p-2 bg-red-600/20 hover:bg-red-600/40 border border-red-500/30 rounded-lg transition-all duration-200 hover:scale-105"
-            >
-              <AlertTriangle className="w-4 h-4" />
-              <span className="text-sm font-bold">EMERGENCY LOCATION</span>
-            </button>
-          )}
-        </div>
-      )}
     </div>
   );
 };
 
-// Your existing App function with location integration
 function App() {
   const [messages, setMessages] = useState<Message[]>([])
   const [message, setMessage] = useState('')
   const [activeTab, setActiveTab] = useState<string>('all')
   const [showLocationPanel, setShowLocationPanel] = useState(false)
+  const [isMenuOpen, setIsMenuOpen] = useState(false)
+  const [connectionStatus, setConnectionStatus] = useState<'connected' | 'connecting' | 'disconnected'>('connected')
+  const [showNotifications, setShowNotifications] = useState(false)
+  const messagesEndRef = useRef<HTMLDivElement>(null)
   
   // Detect user type from URL parameter
   const urlParams = new URLSearchParams(window.location.search)
-  const userType = urlParams.get('type') || 'civilian' // default to civilian
+  const userType = urlParams.get('type') || 'civilian'
 
-  // Both interfaces use the same backend port since P2P handles message routing
   const baseUrl = `http://localhost:3001`
+
+  // Auto-scroll to bottom
+  const scrollToBottom = () => {
+    messagesEndRef.current?.scrollIntoView({ behavior: "smooth" })
+  }
+
+  useEffect(() => {
+    scrollToBottom()
+  }, [messages])
 
   useEffect(() => {
     const interval = setInterval(() => {
       fetch(`${baseUrl}/messages`)
-        .then(res => res.json())
-        .then(data => {
-          console.log(data)
-          setMessages(data || [])
+        .then(res => {
+          if (!res.ok) throw new Error('Network error')
+          return res.json()
         })
-        .catch(err => console.error('Error fetching messages:', err))
+        .then(data => {
+          setMessages(data || [])
+          setConnectionStatus('connected')
+        })
+        .catch(err => {
+          console.error('Error fetching messages:', err)
+          setConnectionStatus('disconnected')
+        })
     }, 2000)
     return () => clearInterval(interval)
   }, [baseUrl])
@@ -323,6 +250,7 @@ function App() {
     if (messageText.trim() === '') return
 
     try {
+      setConnectionStatus('connecting')
       await fetch(`${baseUrl}/send`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
@@ -332,8 +260,10 @@ function App() {
         }),
       })
       setMessage('')
+      setConnectionStatus('connected')
     } catch (err) {
       console.error('Error sending message:', err)
+      setConnectionStatus('disconnected')
     }
   }
 
@@ -343,496 +273,505 @@ function App() {
       sendMessage(message)
     }
   }
-  const handleQuickAction = async (response: any) => {
-  if (response.action === 'location') {
-    // Get location and send quick format
-    getCurrentLocationAndSend('quick');
-  } else if (response.action === 'emergency-location') {
-    getCurrentLocationAndSend('emergency');
-  } else if (response.action === 'detailed-location') {
-    getCurrentLocationAndSend('detailed');
-  } else {
-    // Regular text message
-    sendMessage(response.text);
-  }
-};
-
-const getCurrentLocationAndSend = (type: 'quick' | 'detailed' | 'emergency') => {
-  if (!navigator.geolocation) {
-    sendMessage("❌ GPS not available - please describe your location manually");
-    return;
-  }
-
-  navigator.geolocation.getCurrentPosition(
-    (position) => {
-      const lat = position.coords.latitude;
-      const lng = position.coords.longitude;
-      const accuracy = Math.round(position.coords.accuracy);
-      
-      let message = '';
-      if (type === 'quick') {
-        message = `📍 My location: ${lat.toFixed(6)}, ${lng.toFixed(6)} (±${accuracy}m)`;
-      } else if (type === 'emergency') {
-        message = `🚨 EMERGENCY LOCATION 🚨\n📍 ${lat.toFixed(6)}, ${lng.toFixed(6)}\n🎯 Accuracy: ±${accuracy}m\n🗺️ https://maps.google.com/?q=${lat},${lng}\n⚠️ NEED IMMEDIATE ASSISTANCE`;
-      } else {
-        message = `📍 TEAM LOCATION\nCoordinates: ${lat.toFixed(6)}, ${lng.toFixed(6)}\nAccuracy: ±${accuracy}m\nTime: ${new Date().toLocaleString()}\nGoogle Maps: https://maps.google.com/?q=${lat},${lng}`;
-      }
-      
-      sendMessage(message);
-    },
-    (error) => {
-      sendMessage(`❌ Location error: ${error.message} - Please describe location manually`);
-    },
-    { enableHighAccuracy: true, timeout: 10000 }
-  );
-};
 
   const isTeam = userType === 'team'
 
-  // Tab configuration for NDRF teams
+  // Enhanced tab configuration
   const teamTabs = [
-    { id: 'all', label: 'All Messages', icon: <MessageSquare className="w-4 h-4" />, color: 'blue' },
-    { id: 'civilian', label: 'All Civilians', icon: <User className="w-4 h-4" />, color: 'red' },
-    { id: 'medical', label: 'Medical Team', icon: <Heart className="w-4 h-4" />, color: 'green' },
-    { id: 'fire', label: 'Fire Dept', icon: <Zap className="w-4 h-4" />, color: 'orange' },
-    { id: 'police', label: 'Police', icon: <Shield className="w-4 h-4" />, color: 'purple' },
-    { id: 'logistics', label: 'Logistics', icon: <Truck className="w-4 h-4" />, color: 'yellow' }
+    { id: 'all', label: 'All Comms', icon: <MessageSquare className="w-4 h-4" />, color: 'blue', count: messages.length },
+    { id: 'civilian', label: 'Civilians', icon: <User className="w-4 h-4" />, color: 'red', count: messages.filter(m => m.userType === 'civilian').length },
+    { id: 'medical', label: 'Medical', icon: <Heart className="w-4 h-4" />, color: 'green', count: messages.filter(m => m.sender?.toLowerCase().includes('medical')).length },
+    { id: 'fire', label: 'Fire Dept', icon: <Zap className="w-4 h-4" />, color: 'orange', count: messages.filter(m => m.sender?.toLowerCase().includes('fire')).length },
   ]
-
-  // Get unique civilian senders from messages
-  const getCivilianSenders = () => {
-    const civilians = messages.filter(msg => msg.userType === 'civilian')
-    const uniqueSenders = [...new Set(civilians.map(msg => msg.sender))]
-    return uniqueSenders.map(sender => ({
-      id: `civilian_${sender}`,
-      label: sender || 'Unknown',
-      icon: <User className="w-4 h-4" />,
-      color: 'red',
-      count: civilians.filter(msg => msg.sender === sender).length
-    }))
-  }
-
-  // Combined tabs: team tabs + individual civilian tabs
-  const allTabs = [...teamTabs, ...getCivilianSenders()]
 
   // Filter messages based on active tab
   const filteredMessages = isTeam ? messages.filter(msg => {
     if (activeTab === 'all') return true
     if (activeTab === 'civilian') return msg.userType === 'civilian'
-    if (activeTab.startsWith('civilian_')) {
-      const senderName = activeTab.replace('civilian_', '')
-      return msg.userType === 'civilian' && msg.sender === senderName
-    }
-    // For team types based on sender name
-    if (activeTab === 'medical') return msg.sender?.toLowerCase().includes('medical') || msg.sender?.toLowerCase().includes('ambulance')
-    if (activeTab === 'fire') return msg.sender?.toLowerCase().includes('fire') 
-    if (activeTab === 'police') return msg.sender?.toLowerCase().includes('police')
-    if (activeTab === 'logistics') return msg.sender?.toLowerCase().includes('logistics') || msg.sender?.toLowerCase().includes('supply')
+    if (activeTab === 'medical') return msg.sender?.toLowerCase().includes('medical')
+    if (activeTab === 'fire') return msg.sender?.toLowerCase().includes('fire')
     return msg.userType === 'team'
   }) : messages
 
-  // Quick response options for NDRF teams (updated with location)
+  // Enhanced quick responses
   const teamQuickResponses = [
-    { text: "✅ Acknowledged - Team en route", icon: <CheckCircle className="w-4 h-4" /> },
-    { text: "📍 Share your exact location", icon: <MapPin className="w-4 h-4" /> },
-    { text: "ℹ️ Can you provide more details?", icon: <Info className="w-4 h-4" /> },
-    { text: "👥 How many people need help?", icon: <Users className="w-4 h-4" /> },
-    { text: "🩺 Are there any injuries?", icon: <Phone className="w-4 h-4" /> },
-    { text: "⚡ Stay calm, help is coming!", icon: <Zap className="w-4 h-4" /> },
-    { text: "🕒 ETA 10-15 minutes", icon: <Clock className="w-4 h-4" /> },
-    { text: "📍 Share team location", icon: <Navigation className="w-4 h-4" />, action: 'location' },
-    { text: "🚁 Helicopter landing coordinates", icon: <MapPin className="w-4 h-4" />, action: 'detailed-location' },
-    { text: "📞 Call emergency services now", icon: <Phone className="w-4 h-4" /> }
+    { text: "✅ Acknowledged - Team en route", icon: <CheckCircle className="w-4 h-4" />, color: 'green' },
+    { text: "📍 Share your exact location", icon: <MapPin className="w-4 h-4" />, color: 'blue' },
+    { text: "👥 How many people need help?", icon: <Users className="w-4 h-4" />, color: 'yellow' },
+    { text: "🩺 Are there any injuries?", icon: <Heart className="w-4 h-4" />, color: 'red' },
+    { text: "⚡ Stay calm, help is coming!", icon: <Zap className="w-4 h-4" />, color: 'orange' },
+    { text: "🕒 ETA 10-15 minutes", icon: <Clock className="w-4 h-4" />, color: 'purple' },
   ]
 
-  // Quick text options for civilians (updated with location)
   const civilianQuickTexts = [
-    { text: "🆘 URGENT: Need immediate help!", icon: <AlertTriangle className="w-4 h-4" /> },
-    { text: "📍 Send my GPS location", icon: <MapPin className="w-4 h-4" />, action: 'location' },
-    { text: "🚨 EMERGENCY + GPS location", icon: <AlertTriangle className="w-4 h-4" />, action: 'emergency-location' },
-    { text: "🏠 Building collapse at my location", icon: <MapPin className="w-4 h-4" /> },
-    { text: "🌊 Flood water rising rapidly", icon: <Zap className="w-4 h-4" /> },
-    { text: "🔥 Fire emergency - need evacuation", icon: <Zap className="w-4 h-4" /> },
-    { text: "🩹 Medical emergency - injuries", icon: <Phone className="w-4 h-4" /> },
-    { text: "👥 Multiple people trapped", icon: <Users className="w-4 h-4" /> },
-    { text: "🍽️ Need food and water supplies", icon: <Info className="w-4 h-4" /> },
-    { text: "📍 Sharing my current location", icon: <MapPin className="w-4 h-4" /> },
-    { text: "👶 Children and elderly need help", icon: <Users className="w-4 h-4" /> },
-    { text: "🏥 Need medical assistance", icon: <Phone className="w-4 h-4" /> }
+    { text: "🆘 URGENT: Need immediate help!", icon: <AlertTriangle className="w-4 h-4" />, color: 'red' },
+    { text: "🏠 Building collapse at my location", icon: <MapPin className="w-4 h-4" />, color: 'orange' },
+    { text: "🌊 Flood water rising rapidly", icon: <Zap className="w-4 h-4" />, color: 'blue' },
+    { text: "🔥 Fire emergency - need evacuation", icon: <Zap className="w-4 h-4" />, color: 'red' },
+    { text: "🩹 Medical emergency - injuries", icon: <Heart className="w-4 h-4" />, color: 'pink' },
+    { text: "👥 Multiple people trapped", icon: <Users className="w-4 h-4" />, color: 'yellow' },
   ]
 
   const getMessageStyle = (msg: Message) => {
+    const baseStyle = "group relative p-4 rounded-2xl max-w-[85%] backdrop-blur-sm border transition-all duration-300 hover:scale-[1.02] hover:shadow-xl"
+    
     if (msg.userType === 'team') {
-      // Color code team messages based on sender type
-      if (msg.sender?.toLowerCase().includes('medical') || msg.sender?.toLowerCase().includes('ambulance')) {
-        return 'bg-gradient-to-r from-green-600 to-green-700 text-white ml-8 border-l-4 border-green-300 shadow-lg'
+      if (msg.sender?.toLowerCase().includes('medical')) {
+        return `${baseStyle} bg-gradient-to-br from-green-500/20 to-emerald-600/20 border-green-400/30 text-white ml-8 hover:border-green-400/50`
       }
       if (msg.sender?.toLowerCase().includes('fire')) {
-        return 'bg-gradient-to-r from-orange-600 to-orange-700 text-white ml-8 border-l-4 border-orange-300 shadow-lg'
+        return `${baseStyle} bg-gradient-to-br from-orange-500/20 to-red-600/20 border-orange-400/30 text-white ml-8 hover:border-orange-400/50`
       }
-      if (msg.sender?.toLowerCase().includes('police')) {
-        return 'bg-gradient-to-r from-purple-600 to-purple-700 text-white ml-8 border-l-4 border-purple-300 shadow-lg'
-      }
-      if (msg.sender?.toLowerCase().includes('logistics') || msg.sender?.toLowerCase().includes('supply')) {
-        return 'bg-gradient-to-r from-yellow-600 to-yellow-700 text-white ml-8 border-l-4 border-yellow-300 shadow-lg'
-      }
-      return 'bg-gradient-to-r from-blue-600 to-blue-700 text-white ml-8 border-l-4 border-blue-300 shadow-lg'
+      return `${baseStyle} bg-gradient-to-br from-blue-500/20 to-cyan-600/20 border-blue-400/30 text-white ml-8 hover:border-blue-400/50`
     } else if (msg.userType === 'civilian') {
-      return 'bg-gradient-to-r from-red-600 to-red-700 text-white mr-8 border-l-4 border-red-300 shadow-lg'
-    } else {
-      return 'bg-gradient-to-r from-gray-600 to-gray-700 text-white border-l-4 border-gray-300 shadow-lg'
+      return `${baseStyle} bg-gradient-to-br from-red-500/20 to-pink-600/20 border-red-400/30 text-white mr-8 hover:border-red-400/50`
     }
+    return `${baseStyle} bg-gradient-to-br from-gray-500/20 to-slate-600/20 border-gray-400/30 text-white hover:border-gray-400/50`
   }
 
   const getSenderIcon = (msg: Message) => {
     if (msg.userType === 'team') {
-      if (msg.sender?.toLowerCase().includes('medical') || msg.sender?.toLowerCase().includes('ambulance')) return '🏥'
+      if (msg.sender?.toLowerCase().includes('medical')) return '🏥'
       if (msg.sender?.toLowerCase().includes('fire')) return '🚒'
       if (msg.sender?.toLowerCase().includes('police')) return '👮'
-      if (msg.sender?.toLowerCase().includes('logistics') || msg.sender?.toLowerCase().includes('supply')) return '🚚'
       return '🛡️'
-    } else if (msg.userType === 'civilian') {
-      return '🆘'
-    } else {
-      return '💬'
     }
-  }
-
-  const formatTime = (timestamp: string) => {
-    return new Date(timestamp).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })
+    return '🆘'
   }
 
   return (
-    <div className={`min-h-screen w-full flex flex-col justify-center items-center ${
-      isTeam ? 'bg-gradient-to-br from-blue-950 via-blue-900 to-slate-900' : 'bg-gradient-to-br from-red-950 via-red-900 to-slate-900'
+    <div className={`min-h-screen w-full relative overflow-hidden ${
+      isTeam 
+        ? 'bg-gradient-to-br from-slate-900 via-blue-950 to-indigo-900' 
+        : 'bg-gradient-to-br from-slate-900 via-red-950 to-rose-900'
     }`}>
-      {/* Background pattern overlay */}
-      <div className="absolute inset-0 opacity-10">
-        <div className="absolute inset-0 bg-[radial-gradient(circle_at_1px_1px,_white_1px,_transparent_0)] bg-[length:24px_24px]"></div>
+      {/* Animated Background */}
+      <div className="absolute inset-0 overflow-hidden">
+        <div className="absolute inset-0 bg-[radial-gradient(circle_at_20%_80%,_rgba(120,119,198,0.1),_transparent_50%),radial-gradient(circle_at_80%_20%,_rgba(255,119,198,0.1),_transparent_50%),radial-gradient(circle_at_40%_40%,_rgba(120,200,255,0.1),_transparent_50%)]"></div>
+        <div className="absolute top-0 -left-4 w-72 h-72 bg-purple-500 rounded-full mix-blend-multiply filter blur-xl opacity-20 animate-blob"></div>
+        <div className="absolute top-0 -right-4 w-72 h-72 bg-yellow-500 rounded-full mix-blend-multiply filter blur-xl opacity-20 animate-blob animation-delay-2000"></div>
+        <div className="absolute -bottom-8 left-20 w-72 h-72 bg-pink-500 rounded-full mix-blend-multiply filter blur-xl opacity-20 animate-blob animation-delay-4000"></div>
       </div>
-      
-      <div className='relative flex flex-col h-[85vh] w-full max-w-6xl mx-4 border border-white/20 rounded-3xl overflow-hidden backdrop-blur-xl bg-white/5 shadow-2xl'>
+
+      {/* Main Container */}
+      <div className="relative z-10 h-screen flex flex-col">
         
-        {/* Modern Header with Location Toggle */}
-        <div className={`flex items-center h-20 px-6 ${isTeam ? 'bg-gradient-to-r from-blue-800 to-blue-900' : 'bg-gradient-to-r from-red-700 to-red-800'} border-b border-white/20`}>
-          <div className='flex items-center'>
-            <div className="p-3 rounded-xl bg-white/20 backdrop-blur-sm">
-              {isTeam ? 
-                <Shield className="text-yellow-400 w-8 h-8" /> : 
-                <AlertTriangle className="text-yellow-400 w-8 h-8" />
-              }
-            </div>
-            <div className='text-white ml-4'>
-              <h1 className='text-2xl font-bold tracking-tight'>
-                {isTeam ? 'DisasterNet - RESCUE COMMAND' : 'DisasterNet - EMERGENCY HELP'}
-              </h1>
-              <p className='text-sm opacity-90'>
-                {isTeam ? 'Emergency Response & Coordination Center' : 'Connect with rescue teams instantly'}
-              </p>
-            </div>
-          </div>
-          <div className="ml-auto flex items-center space-x-4">
-            {/* Location Panel Toggle */}
-            <button
-              onClick={() => setShowLocationPanel(!showLocationPanel)}
-              className={`flex items-center space-x-2 px-3 py-2 rounded-xl transition-all duration-200 hover:scale-105 ${
-                showLocationPanel 
-                  ? 'bg-white/20 text-white' 
-                  : 'bg-white/10 text-white/70 hover:bg-white/15'
-              }`}
-            >
-              <MapPin className="w-4 h-4" />
-              <span className="text-sm font-medium">GPS</span>
-            </button>
+        {/* Enhanced Header */}
+        <header className={`relative backdrop-blur-xl border-b border-white/10 ${
+          isTeam 
+            ? 'bg-gradient-to-r from-blue-900/50 to-indigo-900/50' 
+            : 'bg-gradient-to-r from-red-900/50 to-rose-900/50'
+        }`}>
+          <div className="px-6 py-4">
+            <div className="flex items-center justify-between">
+              
+              {/* Left Section - Logo and Title */}
+              <div className="flex items-center space-x-4">
+                <div className={`relative p-3 rounded-2xl backdrop-blur-sm border ${
+                  isTeam 
+                    ? 'bg-blue-500/20 border-blue-400/30' 
+                    : 'bg-red-500/20 border-red-400/30'
+                }`}>
+                  {isTeam ? 
+                    <Shield className="w-8 h-8 text-blue-300" /> : 
+                    <AlertTriangle className="w-8 h-8 text-red-300" />
+                  }
+                  <div className="absolute inset-0 rounded-2xl bg-gradient-to-r from-white/0 to-white/10"></div>
+                </div>
+                
+                <div>
+                  <h1 className="text-2xl font-bold text-white">
+                    {isTeam ? 'Rescue Command' : 'Emergency Alert'}
+                  </h1>
+                  <p className="text-sm text-gray-300">
+                    {isTeam ? 'Emergency Response Center' : 'Connect with rescue teams'}
+                  </p>
+                </div>
+              </div>
 
-            <div className="flex items-center space-x-2 bg-white/10 px-3 py-1 rounded-full">
-              <div className="w-2 h-2 bg-green-400 rounded-full animate-pulse"></div>
-              <span className="text-white text-sm">Live</span>
-            </div>
-            {isTeam && (
-              <div className="flex items-center space-x-2 bg-white/10 px-3 py-1 rounded-full">
-                <Users className="w-4 h-4 text-white" />
-                <span className="text-white text-sm">{messages.length} msgs</span>
+              {/* Center Section - Status Indicators */}
+              <div className="hidden md:flex items-center space-x-4">
+                <div className={`flex items-center space-x-2 px-3 py-2 rounded-xl backdrop-blur-sm ${
+                  connectionStatus === 'connected' ? 'bg-green-500/20 border border-green-400/30' :
+                  connectionStatus === 'connecting' ? 'bg-yellow-500/20 border border-yellow-400/30' :
+                  'bg-red-500/20 border border-red-400/30'
+                }`}>
+                  <div className={`w-2 h-2 rounded-full ${
+                    connectionStatus === 'connected' ? 'bg-green-400 animate-pulse' :
+                    connectionStatus === 'connecting' ? 'bg-yellow-400 animate-pulse' :
+                    'bg-red-400'
+                  }`}></div>
+                  <span className="text-white text-sm font-medium capitalize">{connectionStatus}</span>
+                </div>
+                
+                <div className="flex items-center space-x-2 px-3 py-2 bg-white/10 backdrop-blur-sm rounded-xl border border-white/20">
+                  <Signal className="w-4 h-4 text-green-400" />
+                  <span className="text-white text-sm">Strong</span>
+                </div>
               </div>
-            )}
-          </div>
-        </div>
 
-        {/* Location Panel (Collapsible) */}
-        {showLocationPanel && (
-          <div className="px-6 py-4 bg-slate-800/50 border-b border-white/10">
-            <div className="flex items-center justify-between mb-3">
-              <div className="flex items-center space-x-2">
-                <MapPin className="w-4 h-4 text-green-400" />
-                <span className="text-sm font-medium text-green-400">GPS Location Sharing</span>
-              </div>
-              <button
-                onClick={() => setShowLocationPanel(false)}
-                className="text-gray-400 hover:text-white"
-              >
-                <XCircle className="w-4 h-4" />
-              </button>
-            </div>
-            <LocationSharing onSendLocation={sendMessage} userType={userType} />
-          </div>
-        )}
-
-        {/* Tab Navigation for NDRF Teams */}
-        {isTeam && (
-          <div className="px-6 py-3 bg-slate-800/80 border-b border-white/10">
-            <div className="flex items-center justify-between mb-3">
-              <div className="flex items-center space-x-2">
-                <Filter className="w-4 h-4 text-blue-400" />
-                <span className="text-sm font-medium text-blue-400">Filter Communications</span>
-              </div>
-              <div className="text-xs text-gray-400">
-                Active: {filteredMessages.length} / {messages.length} messages
-              </div>
-            </div>
-            
-            {/* Main Team Tabs */}
-            <div className="flex flex-wrap gap-2 mb-3">
-              {teamTabs.map((tab) => (
+              {/* Right Section - Controls */}
+              <div className="flex items-center space-x-3">
                 <button
-                  key={tab.id}
-                  onClick={() => setActiveTab(tab.id)}
-                  className={`flex items-center space-x-2 px-4 py-2 rounded-xl text-sm font-medium transition-all duration-200 ${
-                    activeTab === tab.id
-                      ? `bg-${tab.color}-600/30 text-${tab.color}-300 border-2 border-${tab.color}-500/50 scale-105`
-                      : 'bg-white/5 text-gray-400 border border-white/10 hover:bg-white/10 hover:text-white'
+                  onClick={() => setShowLocationPanel(!showLocationPanel)}
+                  className={`group relative flex items-center space-x-2 px-4 py-2 rounded-xl backdrop-blur-sm transition-all duration-300 hover:scale-105 ${
+                    showLocationPanel 
+                      ? 'bg-white/20 text-white border border-white/30' 
+                      : 'bg-white/10 text-gray-300 hover:bg-white/15 border border-white/20'
                   }`}
                 >
-                  {tab.icon}
-                  <span>{tab.label}</span>
-                  <span className={`px-2 py-1 rounded-full text-xs ${
-                    activeTab === tab.id ? 'bg-white/20' : 'bg-white/10'
-                  }`}>
-                    {tab.id === 'all' ? messages.length : messages.filter(msg => {
-                      if (tab.id === 'civilian') return msg.userType === 'civilian'
-                      if (tab.id === 'medical') return msg.sender?.toLowerCase().includes('medical') || msg.sender?.toLowerCase().includes('ambulance')
-                      if (tab.id === 'fire') return msg.sender?.toLowerCase().includes('fire')
-                      if (tab.id === 'police') return msg.sender?.toLowerCase().includes('police')
-                      if (tab.id === 'logistics') return msg.sender?.toLowerCase().includes('logistics') || msg.sender?.toLowerCase().includes('supply')
-                      return false
-                    }).length}
-                  </span>
+                  <Satellite className="w-4 h-4 group-hover:scale-110 transition-transform" />
+                  <span className="hidden sm:inline font-medium">GPS</span>
                 </button>
-              ))}
+
+                <button
+                  onClick={() => setShowNotifications(!showNotifications)}
+                  className="relative p-2 rounded-xl bg-white/10 hover:bg-white/20 backdrop-blur-sm border border-white/20 transition-all duration-300 hover:scale-105"
+                >
+                  <Bell className="w-4 h-4 text-white" />
+                  {messages.length > 0 && (
+                    <div className="absolute -top-1 -right-1 w-3 h-3 bg-red-500 rounded-full border border-white/20"></div>
+                  )}
+                </button>
+
+                <button
+                  onClick={() => setIsMenuOpen(!isMenuOpen)}
+                  className="md:hidden p-2 rounded-xl bg-white/10 hover:bg-white/20 backdrop-blur-sm border border-white/20 transition-all duration-300"
+                >
+                  {isMenuOpen ? <X className="w-4 h-4 text-white" /> : <Menu className="w-4 h-4 text-white" />}
+                </button>
+              </div>
             </div>
-
-            {/* Individual Civilian Tabs */}
-            {getCivilianSenders().length > 0 && (
-              <div>
-                <div className="flex items-center space-x-2 mb-2">
-                  <div className="w-4 h-0.5 bg-red-400/50"></div>
-                  <span className="text-xs font-medium text-red-400">Individual Civilians</span>
-                  <div className="flex-1 h-0.5 bg-red-400/50"></div>
-                </div>
-                <div className="flex flex-wrap gap-2">
-                  {getCivilianSenders().map((civilian) => (
-                    <button
-                      key={civilian.id}
-                      onClick={() => setActiveTab(civilian.id)}
-                      className={`flex items-center space-x-2 px-3 py-2 rounded-lg text-xs font-medium transition-all duration-200 ${
-                        activeTab === civilian.id
-                          ? 'bg-red-600/40 text-red-200 border border-red-500/50 scale-105'
-                          : 'bg-red-600/10 text-red-400 border border-red-500/20 hover:bg-red-600/20 hover:text-red-300'
-                      }`}
-                    >
-                      <User className="w-3 h-3" />
-                      <span>{civilian.label}</span>
-                      <span className={`px-1.5 py-0.5 rounded-full text-xs ${
-                        activeTab === civilian.id ? 'bg-white/20' : 'bg-white/10'
-                      }`}>
-                        {civilian.count}
-                      </span>
-                      {/* Priority indicator for recent messages */}
-                      {messages.filter(msg => msg.sender === civilian.label && msg.userType === 'civilian').some(msg => 
-                        new Date().getTime() - new Date(msg.timestamp).getTime() < 300000 // 5 minutes
-                      ) && (
-                        <div className="w-2 h-2 bg-red-400 rounded-full animate-pulse"></div>
-                      )}
-                    </button>
-                  ))}
-                </div>
-              </div>
-            )}
           </div>
-        )}
 
-        {/* Messages Area */}
-        <div className='flex-1 bg-gradient-to-b from-slate-800/50 to-slate-900/80 px-6 py-4 overflow-y-auto space-y-4 backdrop-blur-sm'>
-          {Array.isArray(filteredMessages) && filteredMessages.length > 0 ? (
-            filteredMessages.map((msg, idx) => (
-              <div key={idx} className={`p-4 rounded-2xl transform transition-all duration-300 hover:scale-[1.02] ${getMessageStyle(msg)}`}>
-                <div className="flex justify-between items-start mb-3">
-                  <div className="flex items-center space-x-2">
-                    <span className="text-2xl">{getSenderIcon(msg)}</span>
-                    <span className="font-bold text-sm">
-                      {msg.sender || 'Unknown'}
-                    </span>
-                    {msg.userType === 'civilian' && isTeam && (
-                      <span className="px-2 py-1 bg-red-500/30 text-red-200 text-xs rounded-full border border-red-400/30">
-                        EMERGENCY
-                      </span>
-                    )}
-                  </div>
-                  <span className="text-xs opacity-75 bg-black/20 px-2 py-1 rounded-full">
-                    {formatTime(msg.timestamp)}
-                  </span>
-                </div>
-                <div className="text-sm leading-relaxed font-medium">
-                  {msg.content}
-                </div>
+          {/* Location Panel */}
+          {showLocationPanel && (
+            <div className="border-t border-white/10 px-6 py-4 bg-black/20 backdrop-blur-xl">
+              <LocationSharing onSendLocation={sendMessage} userType={userType} />
+            </div>
+          )}
+
+          {/* Team Tabs */}
+          {isTeam && (
+            <div className="border-t border-white/10 px-6 py-3 bg-black/10">
+              <div className="flex items-center space-x-2 mb-3">
+                <Filter className="w-4 h-4 text-blue-400" />
+                <span className="text-sm font-medium text-blue-400">Communication Filters</span>
               </div>
-            ))
-          ) : (
-            <div className="flex-1 flex items-center justify-center">
-              <div className="text-center space-y-4">
-                <div className="text-6xl mb-4">
-                  {isTeam ? (activeTab === 'civilian' ? '🆘' : activeTab === 'medical' ? '🏥' : activeTab === 'fire' ? '🚒' : activeTab === 'police' ? '👮' : activeTab === 'logistics' ? '🚚' : '🛡️') : '🆘'}
-                </div>
-                <h2 className="text-xl font-bold text-white">
-                  {isTeam && activeTab !== 'all' ? 
-                    (activeTab.startsWith('civilian_') ? 
-                      `No messages from ${activeTab.replace('civilian_', '')}` :
-                      `No ${allTabs.find(t => t.id === activeTab)?.label.toLowerCase()} messages`) : 
-                    'No messages yet'}
-                </h2>
-                <p className="text-gray-400 max-w-md">
-                  {isTeam ? 
-                    (activeTab === 'all' ? 'Monitoring all emergency communications' : 
-                     activeTab === 'civilian' ? 'Waiting for civilian emergency calls' :
-                     activeTab.startsWith('civilian_') ? `Monitoring communications from ${activeTab.replace('civilian_', '')}` :
-                     `No messages from ${allTabs.find(t => t.id === activeTab)?.label.toLowerCase()} yet`) : 
-                    'Send a message to request emergency assistance from nearby rescue teams'
-                  }
-                </p>
+              
+              <div className="flex flex-wrap gap-2">
+                {teamTabs.map((tab) => (
+                  <button
+                    key={tab.id}
+                    onClick={() => setActiveTab(tab.id)}
+                    className={`group relative flex items-center space-x-2 px-4 py-2 rounded-xl text-sm font-medium transition-all duration-300 hover:scale-105 ${
+                      activeTab === tab.id
+                        ? `bg-${tab.color}-500/30 text-${tab.color}-200 border border-${tab.color}-400/50 shadow-lg`
+                        : 'bg-white/5 text-gray-400 border border-white/10 hover:bg-white/10 hover:text-white hover:border-white/20'
+                    }`}
+                  >
+                    <div className="group-hover:scale-110 transition-transform">
+                      {tab.icon}
+                    </div>
+                    <span>{tab.label}</span>
+                    <div className={`px-2 py-1 rounded-full text-xs font-bold ${
+                      activeTab === tab.id ? 'bg-white/20' : 'bg-white/10'
+                    }`}>
+                      {tab.count}
+                    </div>
+                    {activeTab === tab.id && (
+                      <div className="absolute inset-0 rounded-xl bg-gradient-to-r from-white/0 to-white/10"></div>
+                    )}
+                  </button>
+                ))}
               </div>
             </div>
           )}
-        </div>
+        </header>
 
-        {/* Quick Responses for NDRF Teams */}
-        {isTeam && (
-          <div className="px-6 py-3 bg-slate-800/50 border-t border-white/10">
-            <div className="flex items-center justify-between mb-2">
-              <div className="flex items-center">
-                <MessageSquare className="w-4 h-4 text-blue-400 mr-2" />
-                <span className="text-sm text-blue-400 font-medium">Quick Responses</span>
+        {/* Messages Area */}
+        <main className="flex-1 overflow-hidden flex flex-col">
+          <div className="flex-1 overflow-y-auto px-6 py-6 space-y-6">
+            {filteredMessages.length > 0 ? (
+              filteredMessages.map((msg, idx) => (
+                <div key={idx} className={`flex ${msg.userType === 'team' ? 'justify-start' : 'justify-end'}`}>
+                  <div className={getMessageStyle(msg)}>
+                    {/* Message Header */}
+                    <div className="flex justify-between items-start mb-3">
+                      <div className="flex items-center space-x-3">
+                        <span className="text-2xl">{getSenderIcon(msg)}</span>
+                        <div>
+                          <span className="font-bold text-sm">{msg.sender || 'Unknown'}</span>
+                          {msg.userType === 'civilian' && isTeam && (
+                            <div className="inline-block ml-2 px-2 py-1 bg-red-500/40 text-red-200 text-xs rounded-full border border-red-400/30 font-medium animate-pulse">
+                              EMERGENCY
+                            </div>
+                          )}
+                        </div>
+                      </div>
+                      <span className="text-xs opacity-75 bg-black/30 px-3 py-1 rounded-full font-mono">
+                        {new Date(msg.timestamp).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}
+                      </span>
+                    </div>
+                    
+                    {/* Message Content */}
+                    <div className="text-sm leading-relaxed font-medium whitespace-pre-wrap">
+                      {msg.content}
+                    </div>
+
+                    {/* Hover Effect */}
+                    <div className="absolute inset-0 rounded-2xl bg-gradient-to-r from-white/0 to-white/5 opacity-0 group-hover:opacity-100 transition-opacity pointer-events-none"></div>
+                  </div>
+                </div>
+              ))
+            ) : (
+              <div className="flex-1 flex items-center justify-center">
+                <div className="text-center space-y-6 max-w-md">
+                  <div className="text-8xl mb-6 animate-bounce">
+                    {isTeam ? '🛡️' : '🆘'}
+                  </div>
+                  <h2 className="text-2xl font-bold text-white">
+                    {isTeam && activeTab !== 'all' ? 
+                      `No ${teamTabs.find(t => t.id === activeTab)?.label.toLowerCase()} messages` : 
+                      isTeam ? 'Monitoring All Channels' : 'Ready to Send Emergency Alert'}
+                  </h2>
+                  <p className="text-gray-400 leading-relaxed">
+                    {isTeam ? 
+                      (activeTab === 'all' ? 'All emergency communications will appear here' : 
+                       `Waiting for ${teamTabs.find(t => t.id === activeTab)?.label.toLowerCase()} communications`) : 
+                      'Send a message to request emergency assistance from nearby rescue teams'}
+                  </p>
+                  
+                  {!isTeam && (
+                    <div className="flex items-center justify-center space-x-2 text-orange-400">
+                      <Activity className="w-4 h-4 animate-pulse" />
+                      <span className="text-sm font-medium">Rescue teams are standing by</span>
+                    </div>
+                  )}
+                </div>
               </div>
-              {/* Compact Location Sharing for Teams */}
-              <LocationSharing onSendLocation={sendMessage} userType={userType} isCompact={true} />
-            </div>
-            <div className="flex flex-wrap gap-2">
-              {teamQuickResponses.map((response, idx) => (
-                <button
-                  key={idx}
-                  onClick={() => sendMessage(response.text)}
-                  className="flex items-center space-x-2 px-3 py-2 bg-blue-600/20 hover:bg-blue-600/40 text-blue-300 text-sm rounded-xl border border-blue-500/30 transition-all duration-200 hover:scale-105"
-                >
-                  {response.icon}
-                  <span>{response.text}</span>
-                </button>
-              ))}
-            </div>
+            )}
+            <div ref={messagesEndRef} />
           </div>
-        )}
 
-        {/* Quick Emergency Texts for Civilians */}
-        {!isTeam && (
-          <div className="px-6 py-3 bg-slate-800/50 border-t border-white/10">
-            <div className="flex items-center justify-between mb-2">
-              <div className="flex items-center">
-                <AlertTriangle className="w-4 h-4 text-red-400 mr-2" />
-                <span className="text-sm text-red-400 font-medium">Emergency Quick Texts</span>
+          {/* Quick Actions Bar */}
+          {(isTeam ? teamQuickResponses : civilianQuickTexts).length > 0 && (
+            <div className="px-6 py-4 border-t border-white/10 bg-black/20 backdrop-blur-xl">
+              <div className="flex items-center justify-between mb-3">
+                <div className="flex items-center space-x-2">
+                  <MessageSquare className={`w-4 h-4 ${isTeam ? 'text-blue-400' : 'text-red-400'}`} />
+                  <span className={`text-sm font-medium ${isTeam ? 'text-blue-400' : 'text-red-400'}`}>
+                    Quick {isTeam ? 'Responses' : 'Emergency Alerts'}
+                  </span>
+                </div>
+                <LocationSharing onSendLocation={sendMessage} userType={userType} isCompact={true} />
               </div>
-              {/* Compact Location Sharing for Civilians */}
-              <LocationSharing onSendLocation={sendMessage} userType={userType} isCompact={true} />
+              
+              <div className="flex flex-wrap gap-2">
+                {(isTeam ? teamQuickResponses : civilianQuickTexts).map((response, idx) => (
+                  <button
+                    key={idx}
+                    onClick={() => sendMessage(response.text)}
+                    className={`group relative flex items-center space-x-2 px-4 py-2 rounded-xl text-sm font-medium transition-all duration-300 hover:scale-105 hover:shadow-lg backdrop-blur-sm border ${
+                      isTeam 
+                        ? `bg-${response.color}-500/20 hover:bg-${response.color}-500/30 text-${response.color}-200 border-${response.color}-400/30 hover:border-${response.color}-400/50`
+                        : `bg-${response.color}-500/20 hover:bg-${response.color}-500/30 text-${response.color}-200 border-${response.color}-400/30 hover:border-${response.color}-400/50`
+                    }`}
+                  >
+                    <div className="group-hover:scale-110 transition-transform">
+                      {response.icon}
+                    </div>
+                    <span>{response.text}</span>
+                    <div className="absolute inset-0 rounded-xl bg-gradient-to-r from-white/0 to-white/10 opacity-0 group-hover:opacity-100 transition-opacity"></div>
+                  </button>
+                ))}
+              </div>
             </div>
-            <div className="flex flex-wrap gap-2">
-              {civilianQuickTexts.map((response, idx) => (
-                <button
-                  key={idx}
-                  onClick={() => sendMessage(response.text)}
-                  className="flex items-center space-x-2 px-3 py-2 bg-red-600/20 hover:bg-red-600/40 text-red-300 text-sm rounded-xl border border-red-500/30 transition-all duration-200 hover:scale-105"
-                >
-                  {response.icon}
-                  <span>{response.text}</span>
-                </button>
-              ))}
-            </div>
-          </div>
-        )}
+          )}
 
-        {/* Input Section */}
-        <div className='px-6 py-4 bg-slate-900/80 border-t border-white/10 backdrop-blur-sm'>
-          <div className="flex items-end space-x-4">
-            <div className="flex-1">
-              <textarea
-                placeholder={isTeam ? 'Type your response to the emergency...' : 'Describe your emergency situation in detail...'}
-                value={message}
-                onChange={(e) => setMessage(e.target.value)}
-                onKeyPress={handleKeyPress}
-                rows={2}
-                className='w-full p-4 rounded-2xl bg-white/10 backdrop-blur-sm text-white placeholder-gray-400 border border-white/20 focus:border-blue-400 focus:outline-none focus:ring-2 focus:ring-blue-400/50 resize-none transition-all duration-200'
-              />
+          {/* Message Input */}
+          <div className="px-6 py-4 border-t border-white/10 bg-black/30 backdrop-blur-xl">
+            <div className="flex items-end space-x-4">
+              <div className="flex-1 relative">
+                <textarea
+                  placeholder={isTeam ? 'Type your response to the emergency...' : 'Describe your emergency situation in detail...'}
+                  value={message}
+                  onChange={(e) => setMessage(e.target.value)}
+                  onKeyPress={handleKeyPress}
+                  rows={2}
+                  className={`w-full p-4 pr-12 rounded-2xl backdrop-blur-sm text-white placeholder-gray-400 border transition-all duration-300 focus:outline-none focus:ring-2 resize-none ${
+                    isTeam 
+                      ? 'bg-blue-500/10 border-blue-400/30 focus:border-blue-400/50 focus:ring-blue-400/30'
+                      : 'bg-red-500/10 border-red-400/30 focus:border-red-400/50 focus:ring-red-400/30'
+                  }`}
+                />
+                
+                {/* Character counter */}
+                <div className="absolute bottom-2 right-2 text-xs text-gray-400">
+                  {message.length}/500
+                </div>
+              </div>
+              
+              <div className="flex flex-col space-y-2">
+                <button 
+                  onClick={() => sendMessage(message)}
+                  disabled={!message.trim() || connectionStatus === 'connecting'}
+                  className={`group relative p-4 rounded-2xl transition-all duration-300 hover:scale-105 disabled:opacity-50 disabled:cursor-not-allowed disabled:hover:scale-100 ${
+                    isTeam 
+                      ? 'bg-gradient-to-r from-blue-500 to-cyan-500 hover:from-blue-600 hover:to-cyan-600 shadow-lg hover:shadow-blue-500/25'
+                      : 'bg-gradient-to-r from-red-500 to-orange-500 hover:from-red-600 hover:to-orange-600 shadow-lg hover:shadow-red-500/25'
+                  }`}
+                >
+                  {connectionStatus === 'connecting' ? (
+                    <Loader className="w-6 h-6 text-white animate-spin" />
+                  ) : (
+                    <Send className="w-6 h-6 text-white group-hover:translate-x-1 group-hover:-translate-y-1 transition-transform" />
+                  )}
+                  <div className="absolute inset-0 rounded-2xl bg-gradient-to-r from-white/0 to-white/20 opacity-0 group-hover:opacity-100 transition-opacity"></div>
+                </button>
+                
+                {/* Voice input button (placeholder) */}
+                <button className="p-3 rounded-xl bg-white/10 hover:bg-white/20 backdrop-blur-sm border border-white/20 transition-all duration-300 hover:scale-105">
+                  <Mic className="w-4 h-4 text-white" />
+                </button>
+              </div>
             </div>
-            <button 
-              onClick={() => sendMessage(message)}
-              disabled={!message.trim()}
-              className={`p-4 rounded-2xl transition-all duration-200 hover:scale-105 disabled:opacity-50 disabled:cursor-not-allowed ${
-                isTeam ? 'bg-blue-600 hover:bg-blue-700' : 'bg-red-600 hover:bg-red-700'
-              } shadow-lg`}
-            >
-              <Send className='text-white w-6 h-6' />
-            </button>
           </div>
-        </div>
+        </main>
+
+        {/* Enhanced Status Footer */}
+        <footer className="border-t border-white/10 bg-black/20 backdrop-blur-xl">
+          <div className="px-6 py-4">
+            <div className="grid grid-cols-2 md:grid-cols-4 gap-4 text-center">
+              <div className="space-y-1">
+                <div className={`text-xl font-bold ${isTeam ? 'text-blue-400' : 'text-red-400'}`}>
+                  {isTeam ? '🛡️ RESCUE' : '🆘 EMERGENCY'}
+                </div>
+                <p className="text-xs text-gray-400">
+                  {isTeam ? 'Command Center' : 'Alert System'}
+                </p>
+              </div>
+              
+              <div className="space-y-1">
+                <div className="text-green-400 text-lg font-bold flex items-center justify-center space-x-1">
+                  <Globe className="w-4 h-4" />
+                  <span>P2P Active</span>
+                </div>
+                <p className="text-xs text-gray-400">Mesh Network</p>
+              </div>
+              
+              <div className="space-y-1">
+                <div className="text-yellow-400 text-lg font-bold flex items-center justify-center space-x-1">
+                  <Signal className="w-4 h-4" />
+                  <span>Strong</span>
+                </div>
+                <p className="text-xs text-gray-400">Signal Quality</p>
+              </div>
+              
+              <div className="space-y-1">
+                <div className="text-purple-400 text-lg font-bold flex items-center justify-center space-x-1">
+                  <Satellite className="w-4 h-4 animate-pulse" />
+                  <span>GPS Ready</span>
+                </div>
+                <p className="text-xs text-gray-400">Location Services</p>
+              </div>
+            </div>
+          </div>
+        </footer>
       </div>
 
-      {/* Status Bar */}
-      <div className="mt-6 px-4 w-full flex justify-center">
-        <div className="max-w-4xl w-full bg-white/5 backdrop-blur-lg rounded-2xl p-6 shadow-lg border border-white/10">
-          <div className="grid md:grid-cols-4 gap-6 text-center">
-            <div>
-              <div className={`text-2xl font-bold mb-1 ${isTeam ? 'text-blue-400' : 'text-red-400'}`}>
-                {isTeam ? '🛡️ RESCUE TEAM' : '🆘 EMERGENCY MODE'}
+      {/* Mobile Menu Overlay */}
+      {isMenuOpen && (
+        <div className="md:hidden fixed inset-0 z-50 bg-black/50 backdrop-blur-sm">
+          <div className="absolute top-0 right-0 w-80 h-full bg-slate-900/95 backdrop-blur-xl border-l border-white/10">
+            <div className="p-6">
+              <div className="flex items-center justify-between mb-6">
+                <h3 className="text-lg font-bold text-white">Menu</h3>
+                <button
+                  onClick={() => setIsMenuOpen(false)}
+                  className="p-2 rounded-xl bg-white/10 hover:bg-white/20"
+                >
+                  <X className="w-4 h-4 text-white" />
+                </button>
               </div>
-              <p className="text-gray-300 text-sm">
-                {isTeam ? 
-                  'Monitor and respond to emergency requests' :
-                  'Send emergency alerts to rescue teams'
-                }
-              </p>
-            </div>
-            <div>
-              <div className="text-green-400 text-xl font-bold mb-1">
-                🌐 P2P Network Active
+              
+              {/* Mobile menu content */}
+              <div className="space-y-4">
+                <div className="p-4 rounded-xl bg-white/5 border border-white/10">
+                  <h4 className="text-sm font-medium text-white mb-2">Connection Status</h4>
+                  <div className={`flex items-center space-x-2 ${
+                    connectionStatus === 'connected' ? 'text-green-400' :
+                    connectionStatus === 'connecting' ? 'text-yellow-400' :
+                    'text-red-400'
+                  }`}>
+                    <div className={`w-2 h-2 rounded-full ${
+                      connectionStatus === 'connected' ? 'bg-green-400 animate-pulse' :
+                      connectionStatus === 'connecting' ? 'bg-yellow-400 animate-pulse' :
+                      'bg-red-400'
+                    }`}></div>
+                    <span className="text-sm font-medium capitalize">{connectionStatus}</span>
+                  </div>
+                </div>
+                
+                <div className="p-4 rounded-xl bg-white/5 border border-white/10">
+                  <h4 className="text-sm font-medium text-white mb-2">Network Info</h4>
+                  <div className="space-y-2 text-sm text-gray-400">
+                    <div className="flex justify-between">
+                      <span>Messages:</span>
+                      <span className="text-white font-medium">{messages.length}</span>
+                    </div>
+                    <div className="flex justify-between">
+                      <span>Mode:</span>
+                      <span className="text-white font-medium">{isTeam ? 'Rescue Team' : 'Civilian'}</span>
+                    </div>
+                  </div>
+                </div>
               </div>
-              <p className="text-gray-300 text-sm">
-                Offline-first communication system
-              </p>
-            </div>
-            <div>
-              <div className="text-yellow-400 text-xl font-bold mb-1">
-                📡 Signal: Strong
-              </div>
-              <p className="text-gray-300 text-sm">
-                Connected to local mesh network
-              </p>
-            </div>
-            <div>
-              <div className="text-purple-400 text-xl font-bold mb-1">
-                📍 GPS Ready
-              </div>
-              <p className="text-gray-300 text-sm">
-                Location sharing available offline
-              </p>
             </div>
           </div>
         </div>
-      </div>
+      )}
+
+      {/* Custom CSS for animations */}
+      <style jsx>{`
+        @keyframes blob {
+          0% { transform: translate(0px, 0px) scale(1); }
+          33% { transform: translate(30px, -50px) scale(1.1); }
+          66% { transform: translate(-20px, 20px) scale(0.9); }
+          100% { transform: translate(0px, 0px) scale(1); }
+        }
+        
+        .animate-blob {
+          animation: blob 7s infinite;
+        }
+        
+        .animation-delay-2000 {
+          animation-delay: 2s;
+        }
+        
+        .animation-delay-4000 {
+          animation-delay: 4s;
+        }
+        
+        /* Custom scrollbar */
+        .overflow-y-auto::-webkit-scrollbar {
+          width: 6px;
+        }
+        
+        .overflow-y-auto::-webkit-scrollbar-track {
+          background: rgba(0, 0, 0, 0.1);
+          border-radius: 3px;
+        }
+        
+        .overflow-y-auto::-webkit-scrollbar-thumb {
+          background: rgba(255, 255, 255, 0.2);
+          border-radius: 3px;
+        }
+        
+        .overflow-y-auto::-webkit-scrollbar-thumb:hover {
+          background: rgba(255, 255, 255, 0.3);
+        }
+      `}</style>
     </div>
   )
 }

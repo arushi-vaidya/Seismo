@@ -5,3 +5,14 @@ Received message at 2025-08-04 16:37:50.666517 +0530 IST from Civilian (civilian
 Received message at 2025-08-04 16:37:50.666583 +0530 IST from Civilian (civilian): 📍 Send my GPS location
 Received message at 2025-08-04 16:38:17.885116 +0530 IST from Civilian (civilian2): 📍 Send my GPS location
 Received message at 2025-08-04 16:38:17.885353 +0530 IST from Civilian (civilian2): 📍 Send my GPS location
+Received message at 2025-08-04 20:05:26.705869 +0530 IST from Civilian (civilian): 🌊 Flood water rising rapidly
+Received message at 2025-08-04 20:05:32.923297 +0530 IST from NDRF Team (team): ✅ Acknowledged - Team en route
+Received message at 2025-08-04 20:05:35.452318 +0530 IST from NDRF Team (team): 👥 How many people need help?
+Received message at 2025-08-04 20:05:44.076166 +0530 IST from Civilian (civilian): 15
+Received message at 2025-08-04 20:05:50.506678 +0530 IST from NDRF Team (team): ⚡ Stay calm, help is coming!
+Received message at 2025-08-04 20:06:37.304196 +0530 IST from Civilian (civilian): 🏠 Building collapse at my location
+Received message at 2025-08-04 20:06:42.508657 +0530 IST from NDRF Team (team): 🩺 Are there any injuries?
+Received message at 2025-08-04 20:06:46.885301 +0530 IST from Civilian (civilian): 🩹 Medical emergency - injuries
+Received message at 2025-08-04 20:06:54.108123 +0530 IST from NDRF Team (team): 📍 Share your exact location
+Received message at 2025-08-04 20:06:59.339737 +0530 IST from Civilian (civilian): 22 street
+Received message at 2025-08-04 20:07:03.388988 +0530 IST from NDRF Team (team): ⚡ Stay calm, help is coming!
