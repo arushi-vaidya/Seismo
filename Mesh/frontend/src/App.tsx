@@ -1,4 +1,6 @@
-import { AlertTriangle, Send, Shield, MapPin, Clock, Users, Phone, Zap, CheckCircle, Info, MessageSquare, Filter, User, Radio, Truck, Heart } from 'lucide-react'
+// Add this to your existing App.tsx file
+
+import { AlertTriangle, Send, Shield, MapPin, Clock, Users, Phone, Zap, CheckCircle, Info, MessageSquare, Filter, User, Radio, Truck, Heart, Navigation, Share, Copy, Loader, XCircle } from 'lucide-react'
 import React, { useEffect, useState } from 'react'
 
 interface Message {
@@ -8,10 +10,294 @@ interface Message {
   timestamp: string;
 }
 
+interface LocationData {
+  latitude: number;
+  longitude: number;
+  accuracy: number;
+  timestamp: number;
+  address?: string;
+}
+
+// Add this LocationSharing component to your file
+const LocationSharing: React.FC<{
+  onSendLocation: (message: string) => void;
+  userType: 'team' | 'civilian';
+  isCompact?: boolean;
+}> = ({ onSendLocation, userType, isCompact = false }) => {
+  const [location, setLocation] = useState<LocationData | null>(null);
+  const [locationStatus, setLocationStatus] = useState<'idle' | 'loading' | 'success' | 'error'>('idle');
+  const [errorMessage, setErrorMessage] = useState<string>('');
+  const [isWatching, setIsWatching] = useState(false);
+  const [watchId, setWatchId] = useState<number | null>(null);
+
+  const getCurrentLocation = () => {
+    if (!navigator.geolocation) {
+      setLocationStatus('error');
+      setErrorMessage('Geolocation not supported');
+      return;
+    }
+
+    setLocationStatus('loading');
+    setErrorMessage('');
+
+    const options = {
+      enableHighAccuracy: true,
+      timeout: 10000,
+      maximumAge: 60000
+    };
+
+    navigator.geolocation.getCurrentPosition(
+      (position) => {
+        const locationData: LocationData = {
+          latitude: position.coords.latitude,
+          longitude: position.coords.longitude,
+          accuracy: position.coords.accuracy,
+          timestamp: Date.now()
+        };
+        
+        setLocation(locationData);
+        setLocationStatus('success');
+      },
+      (error) => {
+        setLocationStatus('error');
+        switch (error.code) {
+          case error.PERMISSION_DENIED:
+            setErrorMessage('Location access denied');
+            break;
+          case error.POSITION_UNAVAILABLE:
+            setErrorMessage('Location unavailable');
+            break;
+          case error.TIMEOUT:
+            setErrorMessage('Location timeout');
+            break;
+          default:
+            setErrorMessage('Location error');
+            break;
+        }
+      },
+      options
+    );
+  };
+
+  const startWatchingLocation = () => {
+    if (!navigator.geolocation) return;
+
+    const options = {
+      enableHighAccuracy: true,
+      timeout: 5000,
+      maximumAge: 30000
+    };
+
+    const id = navigator.geolocation.watchPosition(
+      (position) => {
+        const locationData: LocationData = {
+          latitude: position.coords.latitude,
+          longitude: position.coords.longitude,
+          accuracy: position.coords.accuracy,
+          timestamp: Date.now()
+        };
+        setLocation(locationData);
+        setLocationStatus('success');
+      },
+      (error) => {
+        setLocationStatus('error');
+        setErrorMessage('Error tracking location');
+      },
+      options
+    );
+
+    setWatchId(id);
+    setIsWatching(true);
+  };
+
+  const stopWatchingLocation = () => {
+    if (watchId !== null) {
+      navigator.geolocation.clearWatch(watchId);
+      setWatchId(null);
+      setIsWatching(false);
+    }
+  };
+
+  const formatLocationMessage = (loc: LocationData, type: 'quick' | 'detailed' | 'emergency'): string => {
+    const accuracy = loc.accuracy < 100 ? 'High' : loc.accuracy < 500 ? 'Medium' : 'Low';
+    
+    if (type === 'quick') {
+      return `📍 My location: ${loc.latitude.toFixed(6)}, ${loc.longitude.toFixed(6)} (±${Math.round(loc.accuracy)}m)`;
+    }
+    
+    if (type === 'emergency') {
+      return `🚨 EMERGENCY LOCATION 🚨\n📍 ${loc.latitude.toFixed(6)}, ${loc.longitude.toFixed(6)}\n🎯 Accuracy: ±${Math.round(loc.accuracy)}m (${accuracy})\n⏰ ${new Date(loc.timestamp).toLocaleString()}\n🗺️ Google Maps: https://maps.google.com/?q=${loc.latitude},${loc.longitude}\n⚠️ NEED IMMEDIATE ASSISTANCE HERE`;
+    }
+    
+    // detailed
+    return `📍 DETAILED LOCATION\nCoordinates: ${loc.latitude.toFixed(6)}, ${loc.longitude.toFixed(6)}\nAccuracy: ±${Math.round(loc.accuracy)}m (${accuracy})\nTime: ${new Date(loc.timestamp).toLocaleString()}\nGoogle Maps: https://maps.google.com/?q=${loc.latitude},${loc.longitude}\nOpenStreetMap: https://www.openstreetmap.org/?mlat=${loc.latitude}&mlon=${loc.longitude}&zoom=15`;
+  };
+
+  const sendLocation = (type: 'quick' | 'detailed' | 'emergency') => {
+    if (!location) return;
+    const message = formatLocationMessage(location, type);
+    onSendLocation(message);
+  };
+
+  useEffect(() => {
+    return () => {
+      if (watchId !== null) {
+        navigator.geolocation.clearWatch(watchId);
+      }
+    };
+  }, [watchId]);
+
+  if (isCompact) {
+    // Compact version for quick access
+    return (
+      <div className="flex items-center space-x-2">
+        <button
+          onClick={getCurrentLocation}
+          disabled={locationStatus === 'loading'}
+          className={`flex items-center space-x-1 px-3 py-2 rounded-lg text-sm transition-all duration-200 hover:scale-105 disabled:opacity-50 ${
+            userType === 'team' 
+              ? 'bg-blue-600/20 hover:bg-blue-600/40 text-blue-300 border border-blue-500/30' 
+              : 'bg-red-600/20 hover:bg-red-600/40 text-red-300 border border-red-500/30'
+          }`}
+        >
+          {locationStatus === 'loading' ? (
+            <Loader className="w-4 h-4 animate-spin" />
+          ) : (
+            <MapPin className="w-4 h-4" />
+          )}
+          <span>Get Location</span>
+        </button>
+        
+        {location && (
+          <button
+            onClick={() => sendLocation('quick')}
+            className={`flex items-center space-x-1 px-3 py-2 rounded-lg text-sm transition-all duration-200 hover:scale-105 ${
+              userType === 'team' 
+                ? 'bg-green-600/20 hover:bg-green-600/40 text-green-300 border border-green-500/30' 
+                : 'bg-orange-600/20 hover:bg-orange-600/40 text-orange-300 border border-orange-500/30'
+            }`}
+          >
+            <Share className="w-4 h-4" />
+            <span>Share Location</span>
+          </button>
+        )}
+      </div>
+    );
+  }
+
+  // Full component for expanded view
+  return (
+    <div className="space-y-3">
+      {/* Location Status */}
+      <div className={`p-3 rounded-lg border ${
+        locationStatus === 'success' ? 'border-green-500/50 bg-green-500/10' :
+        locationStatus === 'error' ? 'border-red-500/50 bg-red-500/10' :
+        locationStatus === 'loading' ? 'border-yellow-500/50 bg-yellow-500/10' :
+        'border-gray-500/50 bg-gray-500/10'
+      }`}>
+        <div className="flex items-center justify-between">
+          <div className="flex items-center space-x-2">
+            {locationStatus === 'loading' && <Loader className="w-4 h-4 animate-spin text-yellow-400" />}
+            {locationStatus === 'success' && <CheckCircle className="w-4 h-4 text-green-400" />}
+            {locationStatus === 'error' && <XCircle className="w-4 h-4 text-red-400" />}
+            {locationStatus === 'idle' && <MapPin className="w-4 h-4 text-gray-400" />}
+            
+            <span className="text-sm font-medium text-white">
+              {locationStatus === 'loading' && 'Getting GPS location...'}
+              {locationStatus === 'success' && 'Location ready'}
+              {locationStatus === 'error' && 'Location error'}
+              {locationStatus === 'idle' && 'GPS location sharing'}
+            </span>
+          </div>
+          
+          {isWatching && (
+            <div className="flex items-center space-x-1 bg-blue-500/20 px-2 py-1 rounded-full">
+              <div className="w-2 h-2 bg-blue-400 rounded-full animate-pulse"></div>
+              <span className="text-xs text-blue-300">Tracking</span>
+            </div>
+          )}
+        </div>
+
+        {location && (
+          <div className="mt-2 text-xs space-y-1">
+            <div className="text-white font-mono">
+              {location.latitude.toFixed(6)}, {location.longitude.toFixed(6)}
+            </div>
+            <div className="text-gray-300">
+              Accuracy: ±{Math.round(location.accuracy)}m • {new Date(location.timestamp).toLocaleTimeString()}
+            </div>
+          </div>
+        )}
+
+        {errorMessage && (
+          <p className="mt-2 text-red-300 text-xs">{errorMessage}</p>
+        )}
+      </div>
+
+      {/* Action Buttons */}
+      <div className="flex space-x-2">
+        <button
+          onClick={getCurrentLocation}
+          disabled={locationStatus === 'loading'}
+          className="flex-1 flex items-center justify-center space-x-2 p-2 bg-blue-600/20 hover:bg-blue-600/40 border border-blue-500/30 rounded-lg transition-all duration-200 hover:scale-105 disabled:opacity-50"
+        >
+          <Navigation className="w-4 h-4" />
+          <span className="text-sm">Get GPS</span>
+        </button>
+
+        <button
+          onClick={isWatching ? stopWatchingLocation : startWatchingLocation}
+          className={`flex items-center justify-center space-x-2 p-2 border rounded-lg transition-all duration-200 hover:scale-105 ${
+            isWatching 
+              ? 'bg-red-600/20 hover:bg-red-600/40 border-red-500/30' 
+              : 'bg-green-600/20 hover:bg-green-600/40 border-green-500/30'
+          }`}
+        >
+          <MapPin className="w-4 h-4" />
+          <span className="text-sm">{isWatching ? 'Stop' : 'Track'}</span>
+        </button>
+      </div>
+
+      {/* Share Buttons */}
+      {location && (
+        <div className="space-y-2">
+          <button
+            onClick={() => sendLocation('quick')}
+            className="w-full flex items-center justify-center space-x-2 p-2 bg-green-600/20 hover:bg-green-600/40 border border-green-500/30 rounded-lg transition-all duration-200 hover:scale-105"
+          >
+            <Share className="w-4 h-4" />
+            <span className="text-sm">Share Coordinates</span>
+          </button>
+
+          <button
+            onClick={() => sendLocation('detailed')}
+            className="w-full flex items-center justify-center space-x-2 p-2 bg-blue-600/20 hover:bg-blue-600/40 border border-blue-500/30 rounded-lg transition-all duration-200 hover:scale-105"
+          >
+            <Navigation className="w-4 h-4" />
+            <span className="text-sm">Share Detailed Location</span>
+          </button>
+
+          {userType === 'civilian' && (
+            <button
+              onClick={() => sendLocation('emergency')}
+              className="w-full flex items-center justify-center space-x-2 p-2 bg-red-600/20 hover:bg-red-600/40 border border-red-500/30 rounded-lg transition-all duration-200 hover:scale-105"
+            >
+              <AlertTriangle className="w-4 h-4" />
+              <span className="text-sm font-bold">EMERGENCY LOCATION</span>
+            </button>
+          )}
+        </div>
+      )}
+    </div>
+  );
+};
+
+// Your existing App function with location integration
 function App() {
   const [messages, setMessages] = useState<Message[]>([])
   const [message, setMessage] = useState('')
   const [activeTab, setActiveTab] = useState<string>('all')
+  const [showLocationPanel, setShowLocationPanel] = useState(false)
   
   // Detect user type from URL parameter
   const urlParams = new URLSearchParams(window.location.search)
@@ -57,6 +343,49 @@ function App() {
       sendMessage(message)
     }
   }
+  const handleQuickAction = async (response: any) => {
+  if (response.action === 'location') {
+    // Get location and send quick format
+    getCurrentLocationAndSend('quick');
+  } else if (response.action === 'emergency-location') {
+    getCurrentLocationAndSend('emergency');
+  } else if (response.action === 'detailed-location') {
+    getCurrentLocationAndSend('detailed');
+  } else {
+    // Regular text message
+    sendMessage(response.text);
+  }
+};
+
+const getCurrentLocationAndSend = (type: 'quick' | 'detailed' | 'emergency') => {
+  if (!navigator.geolocation) {
+    sendMessage("❌ GPS not available - please describe your location manually");
+    return;
+  }
+
+  navigator.geolocation.getCurrentPosition(
+    (position) => {
+      const lat = position.coords.latitude;
+      const lng = position.coords.longitude;
+      const accuracy = Math.round(position.coords.accuracy);
+      
+      let message = '';
+      if (type === 'quick') {
+        message = `📍 My location: ${lat.toFixed(6)}, ${lng.toFixed(6)} (±${accuracy}m)`;
+      } else if (type === 'emergency') {
+        message = `🚨 EMERGENCY LOCATION 🚨\n📍 ${lat.toFixed(6)}, ${lng.toFixed(6)}\n🎯 Accuracy: ±${accuracy}m\n🗺️ https://maps.google.com/?q=${lat},${lng}\n⚠️ NEED IMMEDIATE ASSISTANCE`;
+      } else {
+        message = `📍 TEAM LOCATION\nCoordinates: ${lat.toFixed(6)}, ${lng.toFixed(6)}\nAccuracy: ±${accuracy}m\nTime: ${new Date().toLocaleString()}\nGoogle Maps: https://maps.google.com/?q=${lat},${lng}`;
+      }
+      
+      sendMessage(message);
+    },
+    (error) => {
+      sendMessage(`❌ Location error: ${error.message} - Please describe location manually`);
+    },
+    { enableHighAccuracy: true, timeout: 10000 }
+  );
+};
 
   const isTeam = userType === 'team'
 
@@ -102,7 +431,7 @@ function App() {
     return msg.userType === 'team'
   }) : messages
 
-  // Quick response options for NDRF teams
+  // Quick response options for NDRF teams (updated with location)
   const teamQuickResponses = [
     { text: "✅ Acknowledged - Team en route", icon: <CheckCircle className="w-4 h-4" /> },
     { text: "📍 Share your exact location", icon: <MapPin className="w-4 h-4" /> },
@@ -111,12 +440,16 @@ function App() {
     { text: "🩺 Are there any injuries?", icon: <Phone className="w-4 h-4" /> },
     { text: "⚡ Stay calm, help is coming!", icon: <Zap className="w-4 h-4" /> },
     { text: "🕒 ETA 10-15 minutes", icon: <Clock className="w-4 h-4" /> },
+    { text: "📍 Share team location", icon: <Navigation className="w-4 h-4" />, action: 'location' },
+    { text: "🚁 Helicopter landing coordinates", icon: <MapPin className="w-4 h-4" />, action: 'detailed-location' },
     { text: "📞 Call emergency services now", icon: <Phone className="w-4 h-4" /> }
   ]
 
-  // Quick text options for civilians
+  // Quick text options for civilians (updated with location)
   const civilianQuickTexts = [
     { text: "🆘 URGENT: Need immediate help!", icon: <AlertTriangle className="w-4 h-4" /> },
+    { text: "📍 Send my GPS location", icon: <MapPin className="w-4 h-4" />, action: 'location' },
+    { text: "🚨 EMERGENCY + GPS location", icon: <AlertTriangle className="w-4 h-4" />, action: 'emergency-location' },
     { text: "🏠 Building collapse at my location", icon: <MapPin className="w-4 h-4" /> },
     { text: "🌊 Flood water rising rapidly", icon: <Zap className="w-4 h-4" /> },
     { text: "🔥 Fire emergency - need evacuation", icon: <Zap className="w-4 h-4" /> },
@@ -180,7 +513,7 @@ function App() {
       
       <div className='relative flex flex-col h-[85vh] w-full max-w-6xl mx-4 border border-white/20 rounded-3xl overflow-hidden backdrop-blur-xl bg-white/5 shadow-2xl'>
         
-        {/* Modern Header */}
+        {/* Modern Header with Location Toggle */}
         <div className={`flex items-center h-20 px-6 ${isTeam ? 'bg-gradient-to-r from-blue-800 to-blue-900' : 'bg-gradient-to-r from-red-700 to-red-800'} border-b border-white/20`}>
           <div className='flex items-center'>
             <div className="p-3 rounded-xl bg-white/20 backdrop-blur-sm">
@@ -199,6 +532,19 @@ function App() {
             </div>
           </div>
           <div className="ml-auto flex items-center space-x-4">
+            {/* Location Panel Toggle */}
+            <button
+              onClick={() => setShowLocationPanel(!showLocationPanel)}
+              className={`flex items-center space-x-2 px-3 py-2 rounded-xl transition-all duration-200 hover:scale-105 ${
+                showLocationPanel 
+                  ? 'bg-white/20 text-white' 
+                  : 'bg-white/10 text-white/70 hover:bg-white/15'
+              }`}
+            >
+              <MapPin className="w-4 h-4" />
+              <span className="text-sm font-medium">GPS</span>
+            </button>
+
             <div className="flex items-center space-x-2 bg-white/10 px-3 py-1 rounded-full">
               <div className="w-2 h-2 bg-green-400 rounded-full animate-pulse"></div>
               <span className="text-white text-sm">Live</span>
@@ -211,6 +557,25 @@ function App() {
             )}
           </div>
         </div>
+
+        {/* Location Panel (Collapsible) */}
+        {showLocationPanel && (
+          <div className="px-6 py-4 bg-slate-800/50 border-b border-white/10">
+            <div className="flex items-center justify-between mb-3">
+              <div className="flex items-center space-x-2">
+                <MapPin className="w-4 h-4 text-green-400" />
+                <span className="text-sm font-medium text-green-400">GPS Location Sharing</span>
+              </div>
+              <button
+                onClick={() => setShowLocationPanel(false)}
+                className="text-gray-400 hover:text-white"
+              >
+                <XCircle className="w-4 h-4" />
+              </button>
+            </div>
+            <LocationSharing onSendLocation={sendMessage} userType={userType} />
+          </div>
+        )}
 
         {/* Tab Navigation for NDRF Teams */}
         {isTeam && (
@@ -351,9 +716,13 @@ function App() {
         {/* Quick Responses for NDRF Teams */}
         {isTeam && (
           <div className="px-6 py-3 bg-slate-800/50 border-t border-white/10">
-            <div className="flex items-center mb-2">
-              <MessageSquare className="w-4 h-4 text-blue-400 mr-2" />
-              <span className="text-sm text-blue-400 font-medium">Quick Responses</span>
+            <div className="flex items-center justify-between mb-2">
+              <div className="flex items-center">
+                <MessageSquare className="w-4 h-4 text-blue-400 mr-2" />
+                <span className="text-sm text-blue-400 font-medium">Quick Responses</span>
+              </div>
+              {/* Compact Location Sharing for Teams */}
+              <LocationSharing onSendLocation={sendMessage} userType={userType} isCompact={true} />
             </div>
             <div className="flex flex-wrap gap-2">
               {teamQuickResponses.map((response, idx) => (
@@ -373,9 +742,13 @@ function App() {
         {/* Quick Emergency Texts for Civilians */}
         {!isTeam && (
           <div className="px-6 py-3 bg-slate-800/50 border-t border-white/10">
-            <div className="flex items-center mb-2">
-              <AlertTriangle className="w-4 h-4 text-red-400 mr-2" />
-              <span className="text-sm text-red-400 font-medium">Emergency Quick Texts</span>
+            <div className="flex items-center justify-between mb-2">
+              <div className="flex items-center">
+                <AlertTriangle className="w-4 h-4 text-red-400 mr-2" />
+                <span className="text-sm text-red-400 font-medium">Emergency Quick Texts</span>
+              </div>
+              {/* Compact Location Sharing for Civilians */}
+              <LocationSharing onSendLocation={sendMessage} userType={userType} isCompact={true} />
             </div>
             <div className="flex flex-wrap gap-2">
               {civilianQuickTexts.map((response, idx) => (
@@ -421,7 +794,7 @@ function App() {
       {/* Status Bar */}
       <div className="mt-6 px-4 w-full flex justify-center">
         <div className="max-w-4xl w-full bg-white/5 backdrop-blur-lg rounded-2xl p-6 shadow-lg border border-white/10">
-          <div className="grid md:grid-cols-3 gap-6 text-center">
+          <div className="grid md:grid-cols-4 gap-6 text-center">
             <div>
               <div className={`text-2xl font-bold mb-1 ${isTeam ? 'text-blue-400' : 'text-red-400'}`}>
                 {isTeam ? '🛡️ RESCUE TEAM' : '🆘 EMERGENCY MODE'}
@@ -447,6 +820,14 @@ function App() {
               </div>
               <p className="text-gray-300 text-sm">
                 Connected to local mesh network
+              </p>
+            </div>
+            <div>
+              <div className="text-purple-400 text-xl font-bold mb-1">
+                📍 GPS Ready
+              </div>
+              <p className="text-gray-300 text-sm">
+                Location sharing available offline
               </p>
             </div>
           </div>

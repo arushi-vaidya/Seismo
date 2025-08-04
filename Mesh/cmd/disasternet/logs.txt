@@ -1,0 +1,7 @@
+Received message at 2025-08-04 16:28:19.534258 +0530 IST from Civilian (civilian): 🚨 EMERGENCY + GPS location
+Received message at 2025-08-04 16:36:33.918038 +0530 IST from Civilian (civilian): 🩹 Medical emergency - injuries
+Received message at 2025-08-04 16:36:51.207248 +0530 IST from Civilian (civilian): 🔥 Fire emergency - need evacuation
+Received message at 2025-08-04 16:37:50.666517 +0530 IST from Civilian (civilian): 📍 Send my GPS location
+Received message at 2025-08-04 16:37:50.666583 +0530 IST from Civilian (civilian): 📍 Send my GPS location
+Received message at 2025-08-04 16:38:17.885116 +0530 IST from Civilian (civilian2): 📍 Send my GPS location
+Received message at 2025-08-04 16:38:17.885353 +0530 IST from Civilian (civilian2): 📍 Send my GPS location
